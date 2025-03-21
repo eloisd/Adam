@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Adam</h1>
+{% comment %} {{ request.user }}
+{{ request.user.is_authenticated }} {% endcomment %}
+<p>try Adam</p>
+<p>You can <a href='/login'>Login</a>, or if your don't already have an account <a href='/registration/signup/'>Sign Up</a> !</p>
+
+{% endblock %}

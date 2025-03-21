@@ -16,22 +16,22 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
-from pages.views import home_view, contact_view, about_view, login_view, signup_view, forgottenpassword_view
+from pages.views import home_view, contact_view, about_view, landing_page_view
 from documents.views import document_detail_view, document_create_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('', include('django.contrib.auth.urls')),
 
-    path('', home_view, name='home'),
+    path('', landing_page_view, name='landing-page'),
+    path('home/', home_view, name='home'),
     path('about/', about_view),
     path('contact/', contact_view),
 
-    path('login/', login_view),
-    path('signup/', signup_view),
-    path('forgottenpassword/', forgottenpassword_view),
-
     path('document/', document_detail_view),
     path('create/', document_create_view),
+
+    path('registration/', include('registration.urls')),
 ]

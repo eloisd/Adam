@@ -4,7 +4,9 @@
     <title>Adam</title>
 </head>
 <body>
-    <h1>This is a navbar</h1>
+    <h1>{% block title %}remplace me{% endblock %}</h1>
+
+    
     {% block content %}
         remplace me 
     {% endblock %}
