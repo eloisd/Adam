@@ -1,0 +1,8 @@
+django==5.1.7
+langchain
+langchain-community
+langchain-core
+langgraph
+pandas
+PyPDF2
+python-dotenv
