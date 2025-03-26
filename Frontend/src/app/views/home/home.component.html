@@ -1,0 +1,16 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav [mode]="'side'" class="sidenav" opened disableClose>
+    <app-sidenav (close)="sidenav.close()"></app-sidenav>
+  </mat-sidenav>
+  <mat-sidenav-content style="display: flex; flex-direction: column">
+    <app-header (openSidenav)="sidenav.open()" [isSidenavOpen]="sidenav.opened" [class.shadow-header]="hasAppChatScrolled"></app-header>
+    <mat-drawer-container class="main-container">
+      <mat-drawer #drawer mode="side">
+        <button (click)="drawer.toggle()">toggle</button>
+      </mat-drawer>
+      <mat-drawer-content class="chat-content">
+        <app-chat (scroll)="onScrollAppChat($event)"></app-chat>
+      </mat-drawer-content>
+    </mat-drawer-container>
+  </mat-sidenav-content>
+</mat-sidenav-container>

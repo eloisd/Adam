@@ -1,0 +1,20 @@
+:host {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  box-sizing: border-box;
+  justify-content: left;
+  border-radius: 25px 6px 25px 25px;
+  padding: 15px 20px;
+  background-color: #07e093;
+  align-self: flex-end;
+  max-width: 70%;
+}
+
+.text {
+  font-size: 17px;
+  padding-bottom: 2px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #ffffff;
+}

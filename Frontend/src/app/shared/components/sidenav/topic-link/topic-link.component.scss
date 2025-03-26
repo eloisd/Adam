@@ -1,0 +1,50 @@
+.editing::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 4px;
+  border: 2px solid blue;
+  pointer-events: none;
+}
+
+.topic-link {
+  padding: .5rem;
+
+  button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 200;
+  }
+
+  input {
+    background-color: transparent;
+    outline: none;
+    font-family: var(--mdc-list-list-item-label-text-font), Arial sans-serif;
+    line-height: var(--mdc-list-list-item-label-text-line-height);
+    font-size: var(--mdc-list-list-item-label-text-size);
+    font-weight: var(--mdc-list-list-item-label-text-weight);
+    letter-spacing: var(--mdc-list-list-item-label-text-tracking);
+    color: var(--mdc-list-list-item-label-text-color);
+    border: none;
+    flex: 1 1 auto;
+    padding: 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  mat-icon {
+    color: rgba(0, 0, 0, 0.5);
+
+    &:hover {
+      color: rgba(0, 0, 0, 0.8);
+    }
+  }
+}
+
+.active-link {
+  background-color: rgba(0, 0, 0, 0.1);
+}

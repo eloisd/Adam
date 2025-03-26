@@ -1,0 +1,31 @@
+<mat-toolbar class="sidenav-header">
+  <button mat-icon-button (click)="close.emit()" matTooltip="Fermer la barre latérale">
+    <mat-icon svgIcon="open-sidenav"></mat-icon>
+  </button>
+  <div>
+    <button mat-icon-button matTooltip="Rechercher des topics">
+      <mat-icon svgIcon="search-sidenav"></mat-icon>
+    </button>
+    <button mat-icon-button matTooltip="Nouveau topic" [routerLink]="['/']">
+      <mat-icon svgIcon="new-topic"></mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+<mat-nav-list class="sidenav-list">
+  <mat-list-item class="new-topic">
+    <a routerLink="/">
+      <img src="assets/logo/logo.ico" style="margin-right: .5rem">
+      Accueil
+    </a>
+  </mat-list-item>
+  <div class="topics-list">
+    <div class="topics-sublist">
+      <div class="topic-sublist-name">
+        <h3>Aujourd'hui</h3>
+      </div>
+      @for (topic of topics(); track topic.id) {
+        <app-topic-link [topic]="topic"></app-topic-link>
+      }
+    </div>
+  </div>
+</mat-nav-list>

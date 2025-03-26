@@ -1,0 +1,27 @@
+<mat-list-item class="topic-link" routerLinkActive="active-link" [class.editing]="editingTopic">
+  @if (editingTopic) {
+    <input #editInput type="text" [(ngModel)]="editedName" (blur)="saveTopicName(topic)" (keydown.enter)="saveTopicName(topic)">
+  } @else {
+    <a [routerLink]="['/topic', topic.id]">{{ topic.name }}</a>
+    <button [matMenuTriggerFor]="menu">
+      <mat-icon>more_horiz</mat-icon>
+    </button>
+  }
+</mat-list-item>
+<mat-menu #menu="matMenu" class="custom-menu">
+  <button mat-menu-item (click)="triggerFileInput()">
+    <input #fileInput type="file" max="10" (change)="onFileSelected($event)"
+           accept="application/pdf, text/plain" multiple hidden
+    >
+    <mat-icon>upload</mat-icon>
+    <span>Téléverser</span>
+  </button>
+  <button mat-menu-item (click)="startTopicEdition()">
+    <mat-icon class="material-icons-outlined" style="font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;">edit</mat-icon>
+    <span>Renommer</span>
+  </button>
+  <button mat-menu-item style="color: red; --mat-menu-item-icon-color: red" (click)="deleteTopic()">
+    <mat-icon>delete</mat-icon>
+    <span>Supprimer</span>
+  </button>
+</mat-menu>

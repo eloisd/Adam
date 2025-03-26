@@ -1,0 +1,43 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: flex;
+  width: 46rem;
+  position: relative;
+}
+
+mat-form-field {
+  width: 100%;
+  font-size: 16px;
+
+  @include mat.form-field-overrides((
+    outlined-container-shape: 30px,
+    outlined-outline-color: rgba(0, 0, 0, .1),
+    outlined-focus-outline-width: 1px,
+    outlined-focus-outline-color: rgba(0, 0, 0, .1),
+    outlined-hover-outline-color: rgba(0, 0, 0, .1),
+    outlined-input-text-placeholder-color: rgb(180, 180, 180),
+  ));
+
+  textarea {
+    resize: none;
+    //min-height: 26px;
+  }
+
+  button {
+    padding: 8px;
+    height: 48px;
+    width: 48px;
+  }
+
+  svg {
+    fill: #07e093;
+    width: 32px;
+    height: 32px;
+  }
+
+  .mdc-notched-outline {
+    border-radius: var(--mdc-outlined-text-field-container-shape);
+    box-shadow: rgba(0, 0, 0, 0.1) 0 0 16px;
+  }
+}

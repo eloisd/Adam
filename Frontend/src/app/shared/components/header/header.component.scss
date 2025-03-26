@@ -1,0 +1,43 @@
+.nav-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  .nav-header-right,
+  .nav-header-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .nav-header-right {
+    gap: .5rem;
+  }
+}
+
+.btn-document {
+  width: fit-content;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  font-weight: 600;
+  color: rgb(68, 71, 78);
+}
+
+.profile-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+}

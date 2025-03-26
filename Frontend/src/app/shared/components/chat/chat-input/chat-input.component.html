@@ -1,0 +1,11 @@
+<mat-form-field appearance="outline">
+  <textarea
+    #chatInput
+    appAutoResize_textarea
+    matInput
+    (keydown.enter)="onEnterPressed($event)"
+    placeholder="Poser une question" rows="1" data-rows-min="1" data-rows-max="6" minlength="1"></textarea>
+  <button matSuffix mat-icon-button aria-label="Envoyer" style="margin-right: 8px" (click)="onClick($event)">
+    <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#e8eaed"><path d="M120-160v-243.33L428-480l-308-78v-242l760 320-760 320Z"/></svg>
+  </button>
+</mat-form-field>

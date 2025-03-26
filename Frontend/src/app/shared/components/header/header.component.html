@@ -1,0 +1,41 @@
+<mat-toolbar class="nav-header">
+  <div class="nav-header-left">
+    @if (!isSidenavOpen) {
+      <button mat-icon-button (click)="openSidenav.emit()" matTooltip="Ouvrir la barre latérale">
+        <mat-icon svgIcon="open-sidenav"></mat-icon>
+      </button>
+      <button mat-icon-button matTooltip="Nouveau topic" [routerLink]="['/']">
+        <mat-icon svgIcon="new-topic"></mat-icon>
+      </button>
+    }
+    <h1 style="margin-left: .5rem">Adam</h1>
+  </div>
+  <div class="nav-header-right">
+    @if (files().length > 0) {
+      <button mat-icon-button class="btn-document" [matMenuTriggerFor]="documentMenu">
+        <mat-icon svgIcon="document"></mat-icon>
+        {{ files().length }}
+      </button>
+    }
+    <button class="profile-button" [matMenuTriggerFor]="profilMenu">
+      <img [src]="img_url" alt="profile picture">
+    </button>
+  </div>
+</mat-toolbar>
+<mat-menu #documentMenu="matMenu" class="custom-menu" xPosition="before">
+  @for (file of files(); track file.id) {
+    <button mat-menu-item (click)="download(file)">
+      <span>{{ file.name }}</span>
+    </button>
+  }
+</mat-menu>
+<mat-menu #profilMenu="matMenu" yPosition="below" class="custom-menu xl">
+  <button mat-menu-item>
+    <mat-icon>settings</mat-icon>
+    <span>Paramètres</span>
+  </button>
+  <button mat-menu-item [routerLink]="['/logout']">
+    <mat-icon>logout</mat-icon>
+    <span>Déconnexion</span>
+  </button>
+</mat-menu>

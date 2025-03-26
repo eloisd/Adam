@@ -1,0 +1,42 @@
+<h1 class="page-title">Inscription</h1>
+
+<form class="sign-up-form" [formGroup]="form">
+  <mat-form-field class="input-field">
+    <mat-label>Nom de famille</mat-label>
+    <input matInput type="text" formControlName="lastname">
+  </mat-form-field>
+
+  <mat-form-field class="input-field">
+    <mat-label>Prénom</mat-label>
+    <input matInput type="text" formControlName="firstname">
+  </mat-form-field>
+
+  <mat-form-field class="input-field">
+    <mat-label>Email</mat-label>
+    <input matInput type="email"  formControlName="email">
+  </mat-form-field>
+
+  <mat-form-field class="input-field">
+    <mat-label>Mot de passe</mat-label>
+    <input matInput [type]="hide() ? 'password' : 'text'"  formControlName="password">
+    <button mat-icon-button matSuffix (click)="clickEvent($event)" type="button" style="margin-right: 4px">
+      <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+    </button>
+  </mat-form-field>
+
+  <mat-form-field class="input-field">
+    <mat-label>Confirmer mot de passe</mat-label>
+    <input matInput [type]="hideConfirm() ? 'password' : 'text'"  formControlName="confirmPassword">
+    <button mat-icon-button matSuffix (click)="clickEventConfirm($event)" type="button" style="margin-right: 4px">
+      <mat-icon>{{hideConfirm() ? 'visibility_off' : 'visibility'}}</mat-icon>
+    </button>
+    <mat-error>Les mots de passe ne correspondent pas</mat-error>
+  </mat-form-field>
+
+  <button mat-flat-button color="primary" class="sign-up-button" (click)="signUp()" [disabled]="!form.valid">Devenir membre</button>
+</form>
+
+<div class="already-member">
+  <span>Déjà membre ?</span>
+  <a routerLink="/signin">Se connecter</a>
+</div>

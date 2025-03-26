@@ -1,0 +1,16 @@
+<div class="message-list-container" [class.empty]="messages().length === 0">
+  <div class="message-list-wrapper" (scroll)="onScroll($event)">
+    <div class="message-list-max-width">
+      @for (message of messages(); track message.id) {
+        @if (!message.isBot) {
+          <app-chat-bubble>{{ message.content }}</app-chat-bubble>
+        } @else {
+          <app-chat-bubble-bot>{{ message.content }}</app-chat-bubble-bot>
+        }
+      } @empty {
+        <h2>Comment puis-je vous aider ?</h2>
+      }
+    </div>
+  </div>
+</div>
+<app-chat-input (sendMessage)="onSendMessage($event)"></app-chat-input>

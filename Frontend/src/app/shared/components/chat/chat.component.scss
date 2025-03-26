@@ -1,0 +1,48 @@
+:host {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  flex-grow: 1;
+
+  &.empty {
+    justify-content: center;
+  }
+}
+
+.message-list-container {
+  display: flex;
+  position: relative;
+  box-sizing: border-box;
+  align-items: center;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 100%;
+  padding-left: 10px;
+
+  &.empty {
+    flex-grow: 0;
+    height: 100px;
+
+    .message-list-max-width {
+      align-items: center;
+    }
+  }
+
+  .message-list-wrapper {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+}
+
+.message-list-max-width {
+  display: flex;
+  width: 100%;
+  max-width: 46rem;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 0;
+}

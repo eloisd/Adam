@@ -1,0 +1,227 @@
+
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use '@angular/material' as mat;
+// Plus imports for other components in your app.
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// Define the theme object.
+$Frontend-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  typography: (
+    brand-family: 'Arial, sans serif',
+    plain-family: 'Arial, sans serif',
+    bold-weight: 700,
+    medium-weight: 500,
+    regular-weight: 400,
+  ),
+  density: (
+    scale: 0,
+  )
+));
+
+$primary-color: #07E093;
+$secondary-color-light: #ffffff;
+$secondary-color-dark: #000000;
+
+// Include theme styles for core and each component used in your app.
+// Alternatively, you can import and @include the theme mixins for each component
+// that you are using.
+:root {
+  @include mat.all-component-themes($Frontend-theme);
+
+  @include mat.toolbar-overrides((
+    standard-height: 3.5rem,
+    container-background-color: transparent,
+    title-text-weight: 500,
+    title-text-size: 28px
+  ));
+
+  @include mat.list-overrides((
+    list-item-one-line-container-height: 36px,
+    active-indicator-shape: .5rem
+  ));
+
+  @include mat.sidenav-overrides((
+    content-background-color: #ffffff,
+    container-shape: 0
+  ));
+
+  @include mat.form-field-overrides((
+    filled-focus-active-indicator-color: $primary-color,
+    filled-container-color: $secondary-color-light,
+    hover-state-layer-opacity: 0,
+    filled-focus-label-text-color: $primary-color,
+  ));
+
+  @include mat.button-overrides((
+    filled-container-color: $primary-color,
+  ));
+
+  @include mat.menu-overrides((
+    container-color: #ffffff
+  ));
+}
+
+.mat-mdc-list-item:hover {
+  .mat-icon {
+    display: block!important;
+  }
+}
+.new-topic .mat-mdc-list-item,
+.topics-list .mat-mdc-list-item {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+
+  .mat-mdc-list-item-unscoped-content {
+    display: flex;
+    position: relative;
+  }
+
+  a {
+    display: block;
+    width: 100%;
+    mask-image: linear-gradient(90deg, #000, #000 84%, transparent 89%, transparent);
+  }
+
+  .mat-icon {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.mat-toolbar .mat-mdc-icon-button {
+  border-radius: .5rem;
+
+  .mat-mdc-button-persistent-ripple {
+    border-radius: .5rem;
+  }
+}
+
+.custom-modal-big.cdk-overlay-pane {
+  transform: none;
+}
+.custom-modal.cdk-overlay-pane:not(.custom-modal-big) {
+  transform: translateY(-20%);
+}
+
+.custom-modal.cdk-overlay-pane {
+  --mdc-dialog-container-shape: 8px;
+  --mat-dialog-container-max-width: 1000px;
+  border-radius: 8px;
+
+  .mat-mdc-dialog-surface {
+    box-shadow: rgba(0, 0, 0, 0.2) 4px 4px 16px;
+    position: static;
+  }
+
+  .mat-mdc-dialog-inner-container {
+    position: relative;
+  }
+}
+
+.cdk-overlay-backdrop {
+  //backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.custom-chips {
+  --mdc-filled-text-field-container-color: transparent;
+  --mat-form-field-container-vertical-padding: 0;
+  --mdc-chip-elevated-container-color: #d9d9d9;
+  --mdc-chip-container-shape-radius: 16px;
+  --mdc-chip-outline-width: 0;
+  --mdc-chip-with-trailing-icon-trailing-icon-color: red;
+  --mdc-chip-label-text-color: #000000;
+  --mdc-chip-label-text-size: 16px;
+  --mdc-chip-label-text-weight: 400;
+  width: 100%;
+
+  .mat-mdc-text-field-wrapper {
+    padding: 0;
+  }
+
+  .mat-mdc-form-field-infix {
+    min-height: revert;
+  }
+
+  .mdc-line-ripple {
+    display: none;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.custom-menu.mat-mdc-menu-panel {
+  border-radius: 16px;
+  box-shadow: -2px 2px 16px rgba(0, 0, 0, 0.1);
+  border: 0.4px rgba(0, 0, 0, 0.1) solid;
+
+  &.xl { min-width: 250px; }
+  .mat-mdc-menu-content {
+    padding: .5rem;
+  }
+
+  .mat-mdc-menu-item {
+    padding: .5rem;
+    border-radius: 8px;
+    transition: background-color .2s;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+}
+
+app-chat-input .mdc-notched-outline {
+  border-radius: var(--mdc-outlined-text-field-container-shape);
+  box-shadow: rgba(0, 0, 0, 0.06) 0 3px 16px;
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+app-chat-input .mdc-text-field--focused .mdc-notched-outline {
+  box-shadow: rgba(0, 0, 0, 0.1) 0 3px 16px;
+}
+
+.mat-mdc-dialog-actions {
+  .btn-cancel {
+    border: rgba(0, 0, 0, 0.15) 1px solid;
+    padding: 0 1rem;
+    @include mat.button-overrides((
+      text-state-layer-color: rgba(0, 0, 0, 0.5),
+      filled-container-color: transparent,
+    ));
+
+    .mdc-button__label {
+      color: #0d0d0d;
+    }
+  }
+
+  .btn-delete {
+    border: rgba(0, 0, 0, 0.15) 1px solid;
+    padding: 0 1rem;
+    background-color: var(--mdc-filled-button-container-color);
+    @include mat.button-overrides((
+      text-state-layer-color: rgba(0, 0, 0, 1),
+      filled-container-color: #ef4444,
+    ));
+
+    .mdc-button__label {
+      color: #ffffff;
+    }
+  }
+}
