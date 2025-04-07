@@ -1,0 +1,547 @@
+# RÉSEAU DE NEURONES RÉCURRENTS (RNN) - LEÇON #5
+
+## PRÉSENTATION
+
+Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca          Kevin_Bouchard@uqac.ca
+
+## CONTENU DE LA LEÇON #5
+
+Vous apprendrez:
+- L'intérêt d'inventer des opérations particulières dans les réseaux de neurones
+- Comment on entraîne un réseau profond sans boucle
+- L'implémentation concrète et celles assistée par les librairies TF et PyTorch
+
+Contenu spécifique:
+- Origine des réseaux convolutifs
+- Opération de convolution
+- Éléments avec un rôle spécifique
+- Fonctions d'activation
+- Inversion des couches
+
+## TABLE DES MATIÈRES
+
+1. Introduction
+2. Récurrence
+3. Entraînement d'un RNN
+4. Application d'un RNN
+5. RNN profond
+
+## RÉSEAU DE NEURONES RÉCURRENTS
+
+- Recurrent Neural Network (RNN) - 1980
+- Une famille de réseaux de neurones qui sert aux données séquentielles
+- Les CNN servaient eux aux données sous forme de grilles et pouvaient facilement monter en dimension
+
+- Les RNN sont leur équivalent, mais pour des données sous la forme x^(1), ..., x^(τ)
+  - Ils sont particulièrement adaptés pour la capture d'informations de nature séquentielle
+  - Ils se sont particulièrement illustrés en traitement automatique des langues (NLP)
+  - Ils fonctionnent bien pour toutes sortes de données séquentielles: musique, bourse, capteurs, etc.
+
+- Ils peuvent aussi prendre en entrées des séquences de longueurs variables
+  - Types de configurations possibles: one to many, many to one, many to many
+  - Applications: image captioning, sentiment analysis, translation, text generation
+
+## INTUITION
+
+- Partage de paramètres à travers différentes parties du modèle (comme avec les CNN)
+- Si nous devions utiliser des paramètres différents pour chaque valeur de temps, nous ne pourrions pas généraliser à des longueurs ne faisant pas partie du dataset d'entraînement
+- De plus, nous ne pourrions refléter l'importance d'une sous séquence à travers différentes positions dans le temps
+  - E.g.: « Je suis allé en Islande en 2017 » et « En 2017, je suis allé en Islande »
+  - Un réseau feedforward aurait un poids par feature, avec séquences de taille fixe!!!
+  - Apprentissage de chaque position pour répondre à « en quelle année? »
+
+- On pourrait appliquer une convolution en 1-D
+  - Partage de paramètres, mais creux
+  - Petit nombre de voisins dans la séquence
+
+- Avec les RNN, le partage est fait autrement
+  - Chaque élément de la sortie est une fonction des membres précédents de la sortie
+  - Ils sont produits en appliquant la même règle de mise à jour appliquée aux membres précédents
+  - Le partage de paramètres peut donc être très profond
+
+## INTUITION (SUITE)
+
+- Nos RNN traitent d'une séquence contenant des vecteurs x^(t)
+  - t représente l'index temporel (ou de séquence) allant de 1 à τ
+
+  [
+    [x₁^(1) ... x₁^(τ)]
+    [⋮     ⋱  ⋮     ]
+    [xₘ^(1) ... xₘ^(τ)]
+  ]
+
+- En pratique, ils fonctionnent en minibatch (différente taille de τ pour chaque échantillon de la minibatch)
+
+## RÉCURRENCE
+
+- Imaginez le système dynamique suivant: s^(t) = f(s^(t−1); θ)
+  - La récurrence survient car la définition de s^(t) implique s^(t−1)
+  - Par exemple pour un nombre fini τ = 3, nous avons:
+    s^(3) = f(s^(2); θ) = f(f(s^(1); θ); θ)
+
+- Soit le graphe acyclique:
+  [Représentation graphique d'un système récurrent avec états s^(...), s^(t-1), s^(t), s^(t+1), s^(...)]
+
+- Le système peut être influencer par le signal externe x^(t)→s^(t) = f(s^(t−1); x^(t); θ)
+  - Chaque état contient alors l'information de toute la séquence passée
+
+## RÉCURRENCE (SUITE)
+
+- Toute fonction récurrente peut être considérée comme un RNN!
+
+- En général, on utilise l'équation suivante pour les valeurs des unités cachées:
+  h^(t) = g^(t)(x^t, x^(t−1), ..., x^2, x^1)
+        = f(h^(t−1), x^(t); θ)
+
+- Les architectures typiques de RNN vont par la suite ajouter des couches supplémentaires à la fin pour lire l'information des états h afin de faire des prédictions
+
+[Image représentant un déploiement de RNN avec états h et entrées x]
+
+## RÉCURRENCE (SUITE)
+
+- h^(t) est la variable qui représente l'état
+  - Le RNN apprend h^(t) comme un genre de sommaire de séquence
+  - On incorpore l'information de x dans le temps à l'état h
+
+- En langage naturel, par exemple, le RNN peut servir à prédire le mot suivant selon les mots déjà lu
+  - Pas besoin de retenir tous les mots en entier pour prédire le suivant!
+
+- On associe une séquence de taille arbitraire [x^(1), ..., x^(t)] à un vecteur de taille fixe h^(t)!!
+  - Nécessairement une perte d'information!
+
+## RÉCURRENCE (SUITE)
+
+- Le déroulement d'un RNN a deux avantages majeurs
+
+1. Peu importe la longueur de la séquence, le modèle apprit possède toujours la même taille d'entrée
+   - Spécifié en termes de transitions d'un état à l'autre
+   - Plutôt qu'en termes d'histoire d'états (taille variable)
+
+2. Il est possible d'utiliser la même fonction de transition f() avec les mêmes paramètres à chaque pas
+   - Pas besoin d'apprendre un modèle g() pour tous les pas d'étape possible!!!
+   - Un seul modèle f()→meilleure généralisation!!!
+
+## RNN VANILLE
+
+- Plus spécifiquement, un RNN est en général un réseau qui applique une fonction à une séquence en entrée
+  - Pour produire une séquence de sortie y^1, ..., y^t
+  - En conservant un état interne h^1, ..., h^t
+
+- La version la plus simple:
+  - h^(t) = tanh(Ux^(t) + Wh^(t−1))
+  - y^(t) = Vh^(t)
+
+[Image illustrant l'architecture RNN avec nouvel état, ancien état, état décodé, fonction d'activation et données de la séquence au temps t]
+
+## RNN - DÉROULEMENT DANS LE TEMPS
+
+- Les paramètres sont partagés dans le temps (ou dans la séquence)
+  - U est la matrice de poids entre les entrées et la couche cachée
+  - W est la matrice de poids entre les unités de la couche cachée
+  - V est la matrice de poids entre les unités cachée et la couche de sorties
+
+[Image illustrant le déroulement d'un RNN dans le temps avec les matrices U, W, V et les états h et sorties y]
+
+*Comme pour les CNN, la clé est le partage des paramètres!!!*
+
+## TEMPS ZÉRO?
+
+- Que fait-on au temps zéro→ h^(t) = tanh(Ux^(t) + Wh^(t−1))
+- Nous définissons généralement un h^(0) manuellement
+  - Pytorch l'initialisera avec des zéros autrement
+  - Un vecteur de zéros ne biaise pas les calculs initiaux
+  - L'information importante dans les RNN vient de l'entrée x^(t) et les zéros permettent de se concentrer uniquement sur cette entrée au début
+
+- Chaque batch représente 1 séquence ou plusieurs traitées en parallèle
+  - Le vecteur h^(0) est réinitialisé entre chaque batch, sauf si nous traitons une séquence continue en plusieurs morceaux
+  - Chaque séquence reçoit sont propre h^(0) autrement
+
+## EXEMPLE
+
+- Prédiction de caractères
+- Vocabulaire: [h, e, l, o]
+- Exemple d'entraînement « hello »
+
+[Image montrant l'encodage one-hot des caractères d'entrée "h", "e", "l", "l"]
+
+## EXEMPLE (SUITE)
+
+h^(t) = tanh(Ux^(t) + Wh^(t−1))
+
+- Prédiction de caractères
+- Vocabulaire: [h, e, l, o]
+- Exemple d'entraînement « hello »
+
+[Image montrant l'activation de la couche cachée et les matrices W et U]
+
+## EXEMPLE (SUITE)
+
+h^(t) = tanh(Ux^(t) + Wh^(t−1))
+y^(t) = Vh^(t)
+
+- Prédiction de caractères
+- Vocabulaire: [h, e, l, o]
+- Exemple d'entraînement « hello »
+
+[Image montrant les couches d'entrée, cachée et de sortie avec les caractères cibles "e", "l", "l", "o"]
+
+## EXEMPLE (SUITE)
+
+- On peut ajouter un Softmax (prob=1)
+- Pas pour l'entraînement
+
+[Image montrant l'ajout d'une couche Softmax qui transforme les sorties en probabilités]
+
+## ENTRAÎNEMENT
+
+[Slide titre pour la section entraînement]
+
+## PLUSIEURS À PLUSIEURS
+
+[Image illustrant l'architecture many-to-many avec une séquence d'entrée, des états cachés, et une séquence de sortie]
+
+## SÉQUENCE CIBLE
+
+- On utilise le calcul de l'erreur globale
+- Somme de l'erreur dans le temps par rapport aux cibles
+  E = Σ(t=0 à τ) E^(t)(y^(t), x^(t))
+
+- L'erreur peut être calculée de plusieurs façons
+- Nous l'utilisons pour effectuer la backpropagation, mais cette fois dans le temps
+
+[Image illustrant la propagation de l'erreur à travers le temps E₀, E₁, E₂]
+
+## EXEMPLE: GRADIENT SUR U
+
+- Propageons jusqu'à h₂
+
+∂E^(2)/∂U = ∂E^(2)/∂h^(2) ...
+
+[Image illustrant la backpropagation avec l'erreur E₂]
+
+## EXEMPLE: GRADIENT SUR U (SUITE)
+
+- Propageons jusqu'à U
+
+∂E^(2)/∂U = ∂E^(2)/∂h^(2) (x^(2) ...
+
+[Image illustrant la propagation du gradient jusqu'à U]
+
+## EXEMPLE: GRADIENT SUR U (SUITE)
+
+- Puisque U intervient dans le calcul de h^(1) et h^(0)
+- Il faut propager l'erreur à travers le temps vers l'arrière
+
+∂E^(2)/∂U = ∂E^(2)/∂h^(2) (x^(2) + ∂h^(2)/∂h^(1) (...
+
+[Image illustrant la propagation du gradient entre les états h]
+
+## EXEMPLE: GRADIENT SUR U (SUITE)
+
+- Puisque U intervient dans le calcul de h^(1) et h^(0)
+- Finalement, on complète:
+
+∂E^(2)/∂U = ∂E^(2)/∂h^(2) (x^(2) + ∂h^(2)/∂h^(1) (x^(1) + ∂h^(1)/∂h^(0) x^(0)))
+
+[Image illustrant la propagation complète du gradient]
+
+## EXEMPLE: GRADIENT SUR U (SUITE)
+
+- Afin de compléter le calcul du gradient sur U, il faut continuer les calculs pour l'erreur E1 et E0
+- Le calcul se fait de la même façon
+- La somme de ces contributions donne le gradient sur U
+
+- Pour compléter la backpropagation, il faut calculer les gradients des autres paramètres W et V
+
+- C'est coûteux et non parallélisable, c'est la limite fondamentale des RNN
+  - Plus de détails « Deep Learning » chapitre 10.2.2
+
+## ON PEUT AMÉLIORER
+
+- Version tronquée:
+
+[Image montrant l'approche Truncated Backpropagation Through Time]
+
+Principe de TBPTT :
+1. Divisée en sous-séquences de longueur fixe
+2. Les états cachés du RNN sont préservés pour continuer le traitement
+3. La rétropropagation n'est effectuée que sur la sous-séquence actuelle
+
+PyTorch peut être configurer pour
+Utiliser TBPTT plutôt que BPTT,
+
+... mais c'est assez complexe
+
+## APPLICATIONS DES RNN
+
+Voici un exemple complet de RNN vanille, attention, c'est complexe!
+https://gist.github.com/karpathy/d4dee566867f8291f086
+
+## RECONNAISSANCE GENRE MUSICAL
+
+- But: Reconnaître le genre musical à partir de la partition de musique
+- Données d'apprentissage: 500 partitions (durée variable):
+
+- x: [Notation musicale]
+
+- 3 classes: Blues, Rock, Classique
+- c: (1, 0, 0)-(0, 1, 0)-(0, 0, 1)
+
+## REPRÉSENTATION
+
+[Image montrant la représentation matricielle d'une partition musicale sous forme binaire]
+
+## MODÈLE
+
+- E = entropie(y^τ, c)
+- y^τ = softmax(Vh^τ + d)
+- h^τ = tanh(Ux^(t) + Wh^(t−1) + b)
+
+- b, c, d sont des biais
+
+[Image illustrant l'architecture du modèle RNN pour la classification musicale]
+
+## EXEMPLES
+
+[Image montrant un exemple de machine translation avec deux RNN pour encoder et décoder]
+
+## EXEMPLES (SUITE)
+
+[Image montrant l'architecture encoder-decoder pour la traduction automatique]
+
+## EXEMPLES (SUITE)
+
+[Image montrant une application de description d'images avec des résultats de captioning]
+
+## EXEMPLES (SUITE)
+
+[Image montrant une architecture CNN-RNN pour le traitement d'images]
+
+## EXEMPLES (SUITE)
+
+[Image montrant une architecture CNN-RNN modifiée pour le traitement d'images]
+
+Avant:
+h^(t) = tanh(Ux^(t) + Wh^(t−1))
+
+Maintenant:
+h^(t) = tanh(Ux^(t) + Wh^(t−1) + Qv)
+
+## EXEMPLES (SUITE)
+
+[Image montrant la génération de texte à partir d'une image]
+
+Sortie du jeton <END>
+→fin
+
+## EXEMPLES (SUITE)
+
+- Bons résultats:
+  - A cat sitting on a suitcase on the floor
+  - A cat is sitting on a tree branch
+  - A dog is running in the grass with a frisbee
+  - A white teddy bear sitting in the grass
+  - Two people walking on the beach with surfboards
+  - A tennis player in action on the court
+  - Two giraffes standing in a grassy field
+  - A man riding a dirt bike on a dirt track
+
+## EXEMPLES (SUITE)
+
+- Moins bons résultats...
+  - A woman is holding a cat in her hand
+  - A woman standing on a beach holding a surfboard
+  - A bird is perched on a tree branch
+  - A person holding a computer mouse on a desk
+  - A man in a baseball uniform throwing a ball
+
+## RNN AVANCÉS
+
+[Slide titre pour la section RNN avancés]
+
+## DÉPENDANCES À LONG TERME
+
+- Pour apprendre les dépendances à long terme, il faut propager les gradients loin dans le temps
+- Peut causer des problèmes à l'entraînement!
+- Si le gradient est amplifié dans le temps→ trop grande valeur = exploding gradients
+- Solution: Gradient Clipping
+
+[Image montrant la différence entre gradient sans clipping et avec clipping]
+
+## DISSIPATION DE GRADIENT
+
+[Image montrant le problème de dissipation de gradient à travers le temps]
+
+- Pas de solution ☹
+- Nuisible pour les dépendances à long terme
+
+## ARCHITECTURES PARTICULIÈRES
+
+- En ajoutant des portes (ouvertes/fermées), on peut contrôler la propagation de l'information dans le temps
+
+[Image montrant une architecture RNN avec portes contrôlant le flux d'informations]
+
+## ARCHITECTURES PARTICULIÈRES (SUITE)
+
+- Le module dans un RNN standard contient une seule couche
+
+[Image montrant l'architecture standard d'un RNN avec un module simple]
+
+## LONG SHORT-TERM MEMORY (LSTM)
+
+- Introduction d'un mécanisme de portes
+- Ajout d'une cellule mémoire
+
+[Image illustrant la structure d'une cellule LSTM avec ses différentes portes]
+
+Porte d'entrées
+Porte d'oublis
+Porte de sorties
+
+## LONG SHORT-TERM MEMORY (LSTM) (SUITE)
+
+- La cellule d'état est la clé des LSTM
+  - C'est un convoyeur qui roule sur la chaîne entière avec de simples interactions
+  - L'information est ajoutée ou retirer en fonction des porte
+
+[Image illustrant le mécanisme de la cellule mémoire dans le LSTM]
+
+## LONG SHORT-TERM MEMORY (LSTM) (SUITE)
+
+- Les couches de sigmoid donne des sorties entre 0 et 1 qui décrive la proportion à laisser passer
+  - Une valeur à 0 dit de ne rien laisser passer
+  - Une valeur à 1 dit de tout laisser passer
+
+- Étape #1: la porte d'oublis
+  - Quelle quantité d'information jetons-nous?
+  - Sortie: [0..1] pour chaque chiffre dans l'état C_{t-1}
+
+f_t = σ(W_f·[h_{t-1}, x_t] + b_f)
+
+[Image illustrant la porte d'oubli dans le LSTM]
+
+## LONG SHORT-TERM MEMORY (LSTM) (SUITE)
+
+- Étape #2: nouvelles entrées
+  - Quelle valeurs seront mise à jour? (input gate→sigmoid), b est un biais
+  - Quelle quantité de nouvelles informations garderons-nous?
+  - Tanh→Valeurs potentielles
+  - Combinaison = Mise à jour de l'état
+
+i_t = σ(W_i·[h_{t-1}, x_t] + b_i)
+Ĉ_t = tanh(W_C·[h_{t-1}, x_t] + b_C)
+
+[Image illustrant la porte d'entrée dans le LSTM]
+
+## LONG SHORT-TERM MEMORY (LSTM) (SUITE)
+
+- Étape #3: Mise à jour de C_{t-1}
+
+C_t = f_t * C_{t-1} + i_t * Ĉ_t
+
+[Image illustrant la mise à jour de la cellule dans le LSTM]
+
+## LONG SHORT-TERM MEMORY (LSTM) (SUITE)
+
+- Étape #4: Évaluation de la sortie y_t (attention dans l'exemple c'est h_t)
+  - Basé sur l'état de la cellule, mais filtré
+  - La partie qu'il y avait dans le RNN de base * tanh(C_t)
+
+o_t = σ(W_o [h_{t-1}, x_t] + b_o)
+h_t = o_t * tanh(C_t)
+
+[Image illustrant la porte de sortie dans le LSTM]
+
+## LONG SHORT-TERM MEMORY (LSTM) (SUITE)
+
+- Les LSTM peuvent aider à limiter les risques de gradients qui se dissipent!
+
+[Image illustrant le flux de gradient ininterrompu à travers les cellules LSTM]
+
+## AUTRES TYPES DE CELLULE?
+
+- On trouve beaucoup d'autres variations de RNN
+- Les Gated Recurrent Unit (GRU) sont aussi très populaire
+- Moins de paramètres que les LSTM
+- Plus rapide!
+
+[Image illustrant l'architecture d'une cellule GRU]
+
+## ARCHITECTURE PROFONDE
+
+- Pour créer des RNN profonds, il suffit d'empiler les couches
+- Chaque RNN peut être un RNN, un LSTM ou un autre modèle récurrent...
+- La séquence de sorties d'une couche est la séquence d'entrées de la suivante
+
+[Image illustrant une architecture RNN profonde avec deux niveaux de RNN]
+
+## GOOGLE'S NEURAL MACHINE TRANSLATION
+
+[Image illustrant l'architecture du système de traduction automatique neuronale de Google avec encodeur-décodeur LSTM et mécanisme d'attention]
+
+## DEEPBACH
+
+- Génération de chorales dans le style de Bach
+- Deux réseaux récurrents profonds (LSTM)
+  - Dans les deux directions!
+  - 16 pas de temps avant et après
+- Un réseau dense encode les notes courantes
+- Un 4e réseau apprend à fusionner les informations
+
+[Image illustrant l'architecture DeepBach pour la génération musicale]
+
+## AGENT DE CONVERSATION
+
+- Avec les RNN, il est possible de programmer des agents conversationnels
+- Dans les jeux vidéo, ceux-ci peuvent servir à faire des personnages non joueurs
+  - Les PNJ auront un discours moins répétitif!
+
+[Image illustrant un système d'agent conversationnel basé sur encoder-decoder pour le traitement de messages]
+
+## EXEMPLE DE KERAS POUR TRADUCTION
+
+- Keras donne un exemple intéressant de comment entraîner un modèle génératif sur son site web
+  - https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html
+
+- Les données ressemblent à ça:
+  Go. Va !
+  Hi. Salut !
+  Run! Cours !
+  Run! Courez !
+  Wow! Ça alors !
+  Fire! Au feu !
+  Help! À l'aide !
+  Jump. Saute.
+  Stop! Ça suffit !
+  Stop! Stop !
+  Stop! Arrête-toi !
+  Wait! Attends !
+  Wait! Attendez !
+  Go on. Poursuis.
+
+- Il y en a 10 000 dans l'ensemble de données!
+  - C'est très peu...
+  - Encore une fois, le défi se situe à ce niveau!
+  - L'active learning est intéressant...
+  - Autrement, l'avantage est aux géants du Web
+
+## POUR ALLER PLUS LOIN...
+
+- Évidemment, pour créer des PNJ capables de tenir des conversations, il faut beaucoup plus de données
+- Les RNN présentent plusieurs limitations, qui ont conduit à l'adoption d'architectures plus performantes comme les transformers
+  - Les RNN souffrent de ne pas pouvoir être parallélisés dans le temps
+  - Et du problème de vanishing/exploding gradients
+
+- Autres types de RNN
+  - https://distill.pub/2016/augmented-rnns/
+
+- Plus de détails sur les RNN et sur les LSTM
+  - https://www.cs.toronto.edu/~graves/preprint.pdf
+
+- Aujourd'hui, en dehors de la recherche, il est probablement plus intéressant pour vous d'apprendre à utiliser des API de modèles pré-entraînés!

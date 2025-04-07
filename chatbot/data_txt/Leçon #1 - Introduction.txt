@@ -1,0 +1,355 @@
+# APPRENTISSAGE PROFOND
+
+Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca          Kevin_Bouchard@uqac.ca
+
+## CONTENU DE LA LEÇON #1
+
+**Vous apprendrez:**
+- Dans cette leçon, nous allons discuter du format de la classe.
+- Vous en apprendrez plus sur votre professeur et ses travaux de recherche.
+- Nous essaierons également de définir l'apprentissage profond comme un sous-domaine de l'intelligence artificielle.
+
+**Contenu spécifique:**
+- Présentation de la classe
+- Une brève histoire de moi-même
+- Quelques projets de recherche
+- Qu'est-ce que le DL
+- Par rapport au ML et à l'IA
+- Applications, défis et perspectives
+
+## QUI EST VOTRE PROFESSEUR?
+
+**Principaux intérêts**
+- Intelligence ambiante
+  - Maisons intelligentes
+  - Villes intelligentes
+  - Reconnaissance d'activités
+- Apprentissage automatique
+  - Transformation des données
+  - Filtrage, fusion
+  - Architectures
+- Applications industrielles du ML
+  - Exploitation minière
+  - Électricité
+
+**Positions académiques et diplômes**
+- Professeur invité – Juillet 2023 à Décembre 2023
+  Artificial Intelligence Institute, University of Waikato, New Zealand
+- Scientifique – Octobre 2015 à Août 2016
+  Center for SMART Health, University of California Los Angeles, CA, USA
+- Postdoc – Août 2015 à Octobre 2016
+  Center for Advanced Studies in Adaptive Systems (CASAS), Washington State University, WA, USA
+- Postdoc – Juillet 2014 à Juillet 2015
+  Domotique et informatique mobile lab (DOMUS) Université de Sherbrooke, QC, Canada
+- BSc, MSc, PhD – à Juillet 2014
+  Laboratoire d'intelligence ambiante pour la reconnaissance d'activités (LIARA), Université du Québec à Chicoutimi, QC, Canada
+
+## MES GROUPES FAVORIS
+
+[La diapositive montre plusieurs pochettes d'albums de groupes de musique incluant Haken, Zilton, Ayreon, Avantasia, Therion, Rhapsody, Genesis et d'autres groupes de rock progressif et metal]
+
+## LE LIARA
+
+**Notre expertise?**
+Le laboratoire LIARA est un laboratoire de prototypage qui travaille à la création de nouvelles technologies et d'algorithmes pour les maisons intelligentes destinées au maintien à domicile. L'équipe crée et utilise toutes sortes de capteurs, construit de petits prototypes et les teste avec des personnes dans la maison intelligente de l'UQAC.
+
+Les meilleurs prototypes sont ensuite utilisés avec nos universités partenaires pour des essais cliniques réels.
+
+**Partenaires**
+- Université de Montréal
+- Université de Sherbrooke
+- HEC Montréal
+- 6 Professeurs
+- Toujours autour de 20 étudiant-es (BSc, MSc, PhD)
+- +10 partenariats
+- Plus de 250 articles scientifiques
+
+## NOTRE HABITAT INTELLIGENT EN CLINIQUE
+
+**Capteurs et effecteurs**
+[Image montrant des capteurs intelligents dans un appartement]
+
+**Données**
+- MQTT Broker
+- Kafka
+
+**Prétraitement**
+- Apache Spark
+- Batch Process
+
+**Services et algorithmes**
+[Diagramme montrant le flux de données des capteurs vers une base de données MongoDB, puis vers des systèmes de traitement et d'analyse]
+
+## + 40 000 000 DE DONNÉES
+
+Collectées dans un contexte naturaliste!
+
+## 40 HABITATS INTELLIGENTS DÉPLOYÉS
+
+Utilisé réellement pour des personnes semi autonome, 70% des femmes avec une forme de démence
+
+Basé sur des ensembles de capteurs simples
+
+## BEAUCOUP D'AUTRES EN DÉVELOPPEMENT...
+
+Projet ville intelligente->Côte-St-Luc (30 d'habitats)
+En 2024-2025, une cinquantaine de plus à travers le Québec!
+
+## EXEMPLE DE PROJET: VILLE INTELLIGENTE
+
+- Identifier les personnes vulnérables dans la ville à partir de nœuds de capteurs
+  - Détection de comportements dangereux
+  - Détection de personnes en détresse
+
+[Images montrant des capteurs et des images thermiques détectant des personnes]
+
+## TRAVAUX DE RECHERCHE EN GÉOLOGIE
+
+- En minéralogie:
+[Images montrant des analyses de minéraux avec segmentation]
+
+## ... EN PÉTROLOGIE
+
+- Pas de publication mais nous travaillons sur l'extraction de caractéristiques objectives sur les éléments
+- Nous travaillons aussi sur différents types de segmentation et de représentation de données
+
+[Images montrant des échantillons de roches analysés]
+
+## ESPACE INNOVATION HYDRO-QUÉBEC
+
+- Travaux sur à peu près tous les aspects
+- Production et efficacité énergétique
+- Résilience et robustesse du réseau
+- Cybersécurité défensive
+- Partage et traçabilité des données
+
+## QUELQUES ARTICLES RÉCENTS
+
+[Liste détaillée de 16 publications scientifiques récentes dans divers domaines incluant la détection de chutes, la reconnaissance d'activités humaines, la segmentation de grains minéraux, etc.]
+
+## SOMMAIRE DU COURS 8INF887
+
+**Ce qu'il est utile de savoir pour suivre ce cours :**
+- Avoir des bases d'apprentissage automatique (8INF867)
+- Mathématiques de base : algèbre linéaire et équations différentielles.
+- (Optionnel) Une certaine culture de l'intelligence artificielle en tant que domaine.
+
+**Conseils pour réussir dans ce cours :**
+1. Prenez des notes pendant le cours.
+2. Ne retardez pas votre compréhension ; posez des questions !
+3. N'hésitez pas à chercher en ligne des explications alternatives.
+4. Pratiquez, pratiquez, pratiquez !
+
+## L'APPRENTISSAGE PROFOND
+
+Comment définir l'apprentissage profond, en particulier en relation avec l'apprentissage automatique et d'autres domaines de l'IA?
+
+## NEURONES
+
+Bon, donc, qu'est-ce qui se passe de différent maintenant pour qu'on en parle autant?
+
+Que sont les neurones artificiels et pourquoi ils ont provoqué un changement de paradigme en intelligence artificielle?
+
+Nous détenions la clé depuis déjà un bon moment, il s'agit de la capacité à apprendre à bien représenter l'information!
+
+## APPRENTISSAGE PROFOND
+
+- L'apprentissage profond (deep learning) est un sous-domaine de l'apprentissage automatique qui repose sur des réseaux de neurones artificiels
+  - On compose cependant nos modèles de plusieurs couches hiérarchiques pour extraire des caractéristiques et effectuer des prédictions
+  - Permet d'apprendre des représentations complexes à partir de données brutes
+
+- Le deep learning est particulièrement adapté pour les problèmes où les données sont complexes et expressives
+
+- Le deep learning est State-of-the-art (SOTA) pour de très nombreux problèmes de:
+  - Vision artificielle
+  - Traitement du langage naturel
+  - Robotique, etc.
+
+## OÙ SOMMES NOUS EXACTEMENT?
+
+[Diagramme concentrique montrant les relations entre:]
+
+**Intelligence artificielle**
+- Systèmes experts
+- Vision artificielle
+- Planification, etc.
+
+**Apprentissage automatique**
+- Arbres, régression, etc.
+- Clustering, règles d'association
+
+**Representation learning**
+- Réseau de neurones artificiels
+- Manifold learning
+
+**Deep Learning**
+- Perceptron multicouche
+- RNN, CNN, GAN, Transformeurs
+
+## [DIAGRAMME DE L'INTELLIGENCE ARTIFICIELLE]
+
+[Schéma montrant l'intelligence artificielle au centre avec différentes branches:]
+- Apprentissage automatique (Non supervisé, Supervisé, Renforcement)
+- Perception (Vision, Robotique & Domotique, Langage naturel, Exploration)
+- Planification (Classique et ordre partiel, Reconnaissance de plans, Reconnaissance d'activités)
+- Résolution de problèmes (Satisfaction de contraintes)
+- Représentation de connaissances (Ontologie, Systèmes de recommandation)
+
+## JUSTIFICATION?
+
+- La justification est la même que pour l'apprentissage automatique classique!
+
+- Nous souhaitons faire des agents apprenants afin de pallier différentes difficultés
+  - Il est difficile, voire impossible de codifier l'expertise humaine
+  - Certains environnements sont inconnus
+    - (e.g.: un robot explore un nouveau bâtiment)
+  - Nous souhaitons qu'un agent s'améliore avec l'expérience
+    - (e.g.: on peut programmer un agent pour jouer aux échecs, mais il pourrait s'améliorer en jouant contre de meilleurs joueurs)
+
+- Anticipation: des situations, des changements!
+
+## COMPARAISON ML VS DL
+
+| Aspect | Apprentissage automatique | Apprentissage profond |
+|--------|---------------------------|------------------------|
+| Données | Il faut que les données soient préparées: features, statistiques, format de l'entrée. | Travail souvent directement avec les données brutes (images, textes, sons). Les représentations sont apprises. |
+| Architecture | Modèles aux propriétés diverses, mais généralement rapides et (relativement) simple. | Modèles tous basés sur les neurones artificiels agencés en architectures parfois très complexes et lourdes. |
+| Complexité des données | Nécessite généralement des vecteurs de taille fixe et la plupart des méthodes sont moins adaptées aux données complexes. | Fonctionne particulièrement bien avec les données riches et complexes. Supporte des formats variés. |
+| Interprétabilité | Assez facile à obtenir (surtout les arbres). | Modèles boîtes noires. |
+| Calcul | CPU standards, la mémoire est souvent la limite. | Nécessite souvent du matériel spécialisé tel que des GPU et des TPU. |
+
+## APPLICATIONS EMBLÉMATIQUES
+
+- Santé et sciences biomédicales:
+  - Analyse génomique
+  - Prédiction de maladies
+  - Robots chirurgicaux
+
+- Transport et logistique :
+  - Véhicules autonomes
+  - Navigation moderne (Amazon, UPS), détection d'incidents sur les routes
+
+- Énergie et environnement :
+  - Prévision de la consommation énergétique
+  - Détection des anomalies dans les réseaux
+  - Analyse du couvert forestier
+
+- Finance et économie :
+  - Détection des fraudes
+  - Prédiction des cours boursiers et trading automatique
+
+## APPLICATIONS EMBLÉMATIQUES
+
+- Industrie et fabrication :
+  - Détection de défauts (alliage, soudage, etc.)
+  - Maintenance prédictive
+
+- Divertissement et création de contenu :
+  - Système de recommandation sophistiqué (Netflix, Tik Tok, Spotify, etc.)
+  - Génération d'animations, de textures, etc.
+  - Génération de contenus dans les jeux vidéo
+
+- Sécurité et défense :
+  - Cybersurveillance des systèmes et du Web
+  - Analyse d'imagerie satellite à des fins militaires
+  - Surveillance par imagerie (caméra dans les pénitenciers fédéraux)
+
+- Sciences fondamentales et recherche :
+  - Modélisation de systèmes moléculaires
+  - Optimisation des modèles climatiques ou météorologiques
+
+## COMPOSANTS CLÉS
+
+- Tout système d'apprentissage profond dépend de 4 composants
+
+- Données:
+  - Pour apprendre! Doivent être représentées numériquement
+  - Malédiction de la dimensionalité – relation exponentielle
+
+- Modèles:
+  - La transformation automatique des données (entrées → sorties)
+  - Le cours se concentre en majeur partie sur ce volet
+
+- Fonctions objectives:
+  - Quantification de la performance du modèle; comment apprendre autrement?
+  - Souvent appelé fonctions de pertes en DL (loss functions)
+
+- Algorithmes d'optimisation:
+  - Comment mettre à jour le modèle? Relativement simple en DL, mais essentiel!
+
+## DÉFIS DU DEEP LEARNING
+
+- Avons-nous en 2025 des « vraies » IA grâce au DL?
+- Strong vs weak AI
+  - Compréhension et intelligence de niveau humain
+  - Vs performance
+
+- L'intelligence incorpore les erreurs!
+  - Le mécanisme d'oubli est aussi important que celui de la mémoire
+  - Les êtres intelligents font des erreurs, des approximations et des mensonges
+  - L'intelligence émerge d'informations partielles
+
+## DÉFIS DU DEEP LEARNING
+
+- Il faut une augmentation exponentielle des paramètres pour augmenter logarithmiquement la performance
+  - Même chose pour les données!
+
+| Paramètres | Changement | Justesse | Gain marginal |
+|------------|------------|----------|---------------|
+| 10000      |            | 70,5%    |               |
+| 50000      | 500%       | 82%      | 11,5%         |
+| 500000     | 1000%      | 89,2%    | 7,2%          |
+| 10000000   | 2000%      | 93%      | 3,8%          |
+| 100000000  | 1000%      | 93,7%    | 0,7%          |
+
+Image: Villalobos, P., Sevilla, J., Besiroglu, T., Heim, L., Ho, A. and Hobbhahn, M., 2022. Machine learning model sizes and the parameter gap. arXiv preprint arXiv:2207.02852.
+
+## DÉFIS DU DEEP LEARNING
+
+- La stérilisation potentielle du Web et des médias sociaux
+  - Les modèles sont de plus en plus dépendants des données
+  - Mais plus ils en génèrent, plus ils stérilisent les plateformes
+
+- L'accessibilité, la démocratisation et la concentration
+  - Contrairement à ce qui est souvent véhiculé, l'IA n'a jamais été aussi peu accessible
+  - On ne peut plus reproduire les résultats, ni contribuer significativement au SOTA
+  - Si la tendance se maintient, ce sera un quasi-monopole entre quelques gros joueurs
+
+- Perte de confiance et résistance à l'adoption
+  - La peur (fondée ou non), les impacts, etc. pourraient forcer les gouvernements à légiférer défavorablement
+  - L'éthique et les accidents/erreurs graves pourraient replonger l'IA dans un hiver technologique
+
+## PERSPECTIVES
+
+[Image à gauche: "Perspectives" en vertical]
+
+D'un point de vue scientifique, l'IA continuera probablement de changer fondamentalement presque toutes les disciplines.
+
+À court terme, les industries créatives risques de changer drastiquement. Cependant, elle est limitée par son fonctionnement probabiliste.
+
+Au niveau économique, c'est une industrie qui risque de croître et les joueurs incapables de s'adapter disparaîtront (comme toujours).
+
+L'informatique quantique pourrait provoquer un changement de paradigme encore plus importants en affectant l'IA et la cybersécurité.
+
+## CONCLUSION
+
+- Moins de questions répondues que ce qu'il n'en reste, mais la vérité, c'est qu'il est très difficile de définir l'IA ou même de savoir où nous nous rendrons
+
+- Les prédictions vieillissent d'ailleurs assez mal:
+
+- « [...] the simplest way I can summarize is to say that there are now in the world machines that think, that learn, and that create. » - Simon H., 1957
+
+- « Nevertheless, we consider it to be an important research problem to elucidate (or reject) our intuitive judgment that the extension [from one layer to many] is sterile. » - Minsky & Papert 1969 à propos des MLP
+
+## RÉFÉRENCES ORIGINALES
+
+| Sur l'échec des MLP | Minsky M, Papert S. 1969 Perceptrons: an introduction to computational geometry. Cambridge, MA: MIT Press. |
+|-------------------|---------------------------------------------------------------------------------|
+| Citation de Simon | Simon, H.A., 1957. Models of man: social and rational; mathematical essays on rational human behavior in society setting. New York: Wiley. |
+| Taille des modèles | Villalobos, P., Sevilla, J., Besiroglu, T., Heim, L., Ho, A. and Hobbhahn, M., 2022. Machine learning model sizes and the parameter gap. arXiv preprint arXiv:2207.02852. |

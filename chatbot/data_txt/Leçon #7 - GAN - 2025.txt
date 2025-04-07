@@ -1,0 +1,585 @@
+# GENERATIVE ADVERSARIAL NETWORKS (GAN)
+
+## Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca        Kevin_Bouchard@uqac.ca
+
+## TABLE DES MATIÈRES
+
+1. Introduction au GAN
+2. Principes de base
+3. DCGAN
+4. CGAN
+5. Autres GAN en bref
+6. Exemple complet
+
+*Images: Sauf lorsque précisé autrement, les images proviennent des livres en référence, de la documentation de Keras, de Pr. Kevin Bouchard ou sont sous licence CC.
+
+## INTRODUCTION
+
+Dans ce module, nous introduisons un type particulier de réseaux de neurones.
+
+Inventés en 2014 par Goodfellow, les Generative Adversarial Networks (GAN) sont devenus très populaires dans les dernières années.
+
+Ce sont des réseaux génératifs:
+- Contrairement aux auto-encodeurs, ils peuvent créer de nouvelles données avec un encodage arbitraire
+
+Dans ce module, nous:
+1. Introduirons les concepts de base des GAN
+2. Comment les implémenter sous Keras
+3. Nous discuterons des principaux types de GAN
+
+## SURVOL DES GAN
+
+Commençons par une petite vidéo assez impressionnante démontrant l'étendue de leurs pouvoirs.
+
+*Progressive GAN - 2017*
+
+Cette qualité de génération de visages n'est pas possible avec les VAE simple que nous avons vu précédemment.
+
+Les GAN réussissent ces exploits en entraînant deux réseaux en compétition coopérative:
+- **Générateur**: il vise à apprendre à générer de fausses données (images, mais aussi textes, sons, etc.) pour tromper le discriminateur
+- **Discriminateur**: il va tenter d'apprendre à détecter les fausses données (problème de classification binaire +/-)
+
+Au fil de l'entraînement, le discriminateur n'arrivera plus à détecter les fausses données.
+
+Il pourra donc être éliminer et nous utiliserons le générateur pour créer de nouvelles données.
+
+## DÉFIS DES GAN
+
+L'intuition derrière les GAN est simple.
+
+Comment trouver un bon compromis dans l'entraînement entre le générateur et le discriminateur?
+- Nous avons besoin d'une compétition saine entre les deux
+- Sinon, ils ne parviendront pas à apprendre tous les deux!!!
+
+Les GAN sont en fait très difficiles à entraîner!
+- Si le discriminateur converge plus vite, le générateur ne reçoit plus suffisamment de gradients pour converger!!!
+
+Les GAN souffrent aussi du problème d'effondrement:
+- Le générateur produit des sorties presque similaires pour différents encodages latents!
+
+## PRINCIPES DE BASE
+
+[*L'image montre une analogie avec un faussaire (générateur) qui produit de faux billets et un policier (discriminateur) qui tente de distinguer les vrais des faux billets*]
+
+L'entrée du générateur est du bruit (vecteur aléatoire).
+
+Sa sortie est la donnée synthétisée.
+
+L'entrée du discriminateur est une vraie ou une fausse donnée:
+- Les vraies données viennent d'un vrai ensemble d'entraînement
+- Les fausses du générateur
+
+Sa sortie est 1 ou 0 (100% vraie ou 0% vraie).
+
+Notez que nous n'avons pas besoin d'étiquettes!!!
+
+## PRINCIPES DE BASE
+
+[*Diagramme montrant l'architecture du GAN avec générateur G prenant un bruit z en entrée pour produire des fausses données x', et discriminateur D recevant x' ou des vraies données x pour produire une probabilité*]
+
+## LE DISCRIMINATEUR
+
+Le discriminateur peut être entraîné avec la fonction de coût d'entropie croisée binaire (vue précédemment):
+
+L^(D)(θ^(G), θ^(D)) = -E_{x~p_{data}} log[D(x)] - E_z log[1-D(G(z))]
+
+La perte est la somme négative de l'attente d'une identification correcte des données réelles
+
+et l'attente de 1.0 moins identifier correctement les données synthétiques.
+
+Le log ne change pas l'emplacement de minimum locaux/globaux:
+- Il évite les extrêmes!
+
+## LE DISCRIMINATEUR
+
+Deux minibatch de données sont fournies au discriminateur durant l'entraînement:
+- x les données réelles avec étiquette 1
+- x' = G(z) les fausses données du générateur avec étiquette 0
+
+Pour minimiser la fonction de perte, les paramètres du discriminateur θ^(D) seront mis à jour:
+- avec backpropagation
+- en identifiant les vraies données D(x) → 1.0
+- et les données synthétiques 1.0 - D(G(z)) → 1.0
+
+z est le vecteur de bruit arbitraire utilisé par le générateur pour synthétiser nouveaux signaux.
+
+## LE GÉNÉRATEUR
+
+Pour entraîner le générateur, le GAN considère le total des pertes du discriminateur et du générateur comme un jeu à somme nulle.
+
+La fonction de perte est donc le négatif de celle du discriminateur.
+
+Du point de vue du générateur, V^(G)(θ^(G), θ^(D)) = -L^(D)(θ^(G), θ^(D)) doit être minimisée.
+
+Du discriminateur, elle doit être maximisée.
+
+C'est donc un problème minimax!!!
+min_G max_D V^(G)(θ^(G), θ^(D))
+
+## RELATION PAR RAPPORT AUX VAE
+
+Les VAE minimisent indirectement une fonction objective.
+
+Les GAN tentent de minimiser directement la fonction objective en formant les discriminateurs pour apprendre la fonction objective d'un générateur fixe:
+- Combien pouvons-nous changer le Générateur?
+- Tout en ayant le Discriminateur comme une bonne approximation?
+
+Le cadre des GAN peut inclure des mesures alternatives de divergences pour objectif.
+
+## FORCES DES GAN
+
+On peut utiliser la backpropagation.
+
+Les données générées par les GAN ressemblent aux données d'origine:
+- Donc, d'un point de vue humain, elles semblent plus réalistes
+
+Pas besoin d'étiquettes pour les entraînés:
+- C'est de l'auto-apprentissage!!!
+- On peut aussi dire que c'est non-supervisé, mais je préfère le premier terme qui est plus spécifique
+
+## FAIBLESSES DES GAN
+
+Critères d'arrêt peu clairs.
+
+Facilement emprisonnés dans des optima locaux qui mémorisent les données d'entraînement.
+
+Modèle génératif difficile à inverser pour récupérer le z latent du x généré:
+- Ce qui est parfois un avantage!
+
+Aucune mesure d'évaluation donc difficile à comparer avec d'autres modèles.
+
+Difficile à entraîner (outils immatures pour l'optimisation):
+- De moins en moins!
+
+## DCGAN
+
+[*Section titre avec "DCGAN" dans un grand cercle rouge numéroté 16*]
+
+## DEEP CONVOLUTIONAL GAN (DCGAN)
+
+[*Diagramme montrant l'architecture DCGAN avec générateur et discriminateur utilisant des couches de convolution*]
+
+- Strides>1 plutôt que pooling
+- Juste des couches de convolution, pas de denses!
+  - Sauf au début pour la source
+- Batch normalization: stabiliser l'apprentissage en normalisant l'entrée à chaque couche pour avoir une moyenne nulle et une variance unitaire
+  - Pas de BN dans la couche de sortie du générateur et couche d'entrée du discriminateur.
+- Leaky dans le discriminateur pour éviter d'avoir des activations à 0 (ReLU)
+
+## [Architecture détaillée du modèle générateur et discriminateur]
+
+[*Représentation détaillée des couches et paramètres du modèle DCGAN avec deux colonnes montrant l'architecture du générateur et du discriminateur*]
+
+## GÉNÉRATEUR
+
+On génère les fausses images à partir de vecteurs de taille 100:
+- Aléatoire entre [-1 et 1]
+
+Les noyaux sont de taille 5x5.
+
+Après la couche sigmoid, nous avons 28 x 28 x 1 avec chaque pixel normalisé entre [0.0,1.0]:
+- correspondant à nos pixels en niveaux de gris [0, 255]
+
+VOIR CODE:
+- build_generator
+
+## DISCRIMINATEUR
+
+Très similaire à nos CNN standard.
+
+L'entrée est 28 x 28 x 1 (nos images MNIST).
+
+4 couches de convolution avec stride=2 sauf le dernier:
+- On downsample les filtres
+- Encore de taille 5
+
+Un termine par une couche dense (1 unité):
+- Sigmoid, prédiction entre 1.0 et 0.0 (probabilité d'être vraie ou fausse)
+
+VOIR CODE:
+- build_discriminator
+- build_and_train_models()
+
+## DCGAN
+
+Attention! Si la batch normalization est utilisé dans le discriminateur notre GAN ne converge pas.
+
+Même chose si le stride=2 est changé dans les deux dernières couches plutôt que les premières.
+
+[*Image montrant une grille d'images générées de chiffres MNIST à différentes époques d'entraînement, de 500 à 40000*]
+
+## CONDITIONAL GAN
+
+[*Section titre avec "CONDITIONAL GAN" dans un grand cercle rouge numéroté 22*]
+
+## CONDITIONAL GAN (CGAN)
+
+Nos fausses images avec DCGAN étaient générées aléatoirement:
+- Aucun contrôle sur les chiffres spécifiques produits
+
+Ce problème peut être résolu par les Conditional GAN (CGAN):
+- On impose une condition aux entrées du générateur et du discriminateur
+- La condition se présente sous la forme d'une version vectorielle unique du chiffre
+
+## CONDITIONAL GAN (CGAN)
+
+[*Diagramme détaillé de l'architecture CGAN montrant comment le one-hot label est incorporé dans le générateur et le discriminateur*]
+
+CGAN est similaire à DCGAN, à l'exception du one-hot supplémentaire à l'entrée.
+
+Pour le générateur, l'étiquette one-hot est concaténée avec le vecteur latent avant la couche dense.
+
+Pour le discriminateur, une nouvelle couche dense est ajoutée.
+
+## EN GROS...
+
+Le générateur apprend à générer de fausses images d'un vecteur d'entrées et du chiffre spécifique.
+
+Le discriminateur est toujours un classeur binaire, mais se base sur l'image concaténée à l'étiquette du vrai chiffre.
+
+Les équations de perte sont maintenant:
+
+L^(D)(θ^(G), θ^(D)) = -E_{x~p_data} log(D(x|y)) - E_z log(1-D(G(z|y')|y'))
+
+L^(G)(θ^(G), θ^(D)) = -E_z log(D(G(z|y')))
+
+Voir code brièvement:
+- build_generator
+- build_discriminator
+
+## CGAN
+
+[*Image montrant une grille d'images générées de chiffres MNIST à différentes époques d'entraînement, de 500 à 40000, organisés par chiffre (0-9)*]
+
+## AUTRES MODÈLES DE GAN
+
+[*Section titre avec "AUTRES MODÈLES DE GAN" dans un grand cercle rouge numéroté 27*]
+
+## INFORMATION MAXIMIZING GENERATIVE ADVERSARIAL NETWORK (INFOGAN)
+
+Un InfoGAN est une extension qui tente de structurer l'entrée ou l'espace latent pour le générateur.
+
+Plus précisément, l'objectif est d'ajouter une signification sémantique spécifique aux variables dans l'espace latent.
+
+Plutôt que d'utiliser un seul vecteur de bruit non-structuré:
+- (1) z traité comme source de bruit incompressible
+- (2) c, code latent qui cible les caractéristiques sémantiques structurées de la distribution
+
+[*Diagramme montrant l'architecture InfoGAN avec le réseau générateur, discriminateur et estimateur de code*]
+
+## STACKGAN - 2017
+
+StackGAN est une extension du GAN pour générer des images à partir de textes à l'aide d'une pile hiérarchique de modèles CGAN.
+
+[*Diagramme montrant l'architecture à deux étages de StackGAN: premier étage pour générer une esquisse à basse résolution et second étage pour raffiner l'image*]
+
+## STACKGAN - 2017
+
+[*Image montrant des exemples de génération d'images à partir de descriptions textuelles de fleurs et autres objets, comparant les résultats de StackGAN avec d'autres méthodes*]
+
+*https://arxiv.org/pdf/1612.03242.pdf*
+
+## PROGRESSIVE GROWING GAN - 2017
+
+On augmente progressivement la profondeur du modèle durant l'entraînement.
+
+On garde le générateur et le discriminateur progressif!!!
+
+Toutes les couches sont entraînables durant tout le processus.
+
+[*Diagramme montrant l'évolution progressive de la taille des réseaux G et D pendant l'entraînement, de 4x4 jusqu'à 1024x1024*]
+
+## PROGRESSIVE GROWING GAN
+
+La transition d'une résolution à une autre est traitée comme un bloc résiduel.
+
+[*Diagramme technique montrant comment les transitions entre résolutions sont gérées dans le générateur et discriminateur*]
+
+*https://arxiv.org/pdf/1710.10196.pdf*
+
+## STYLEGAN - 2018
+
+[*Image montrant un exemple de StyleGAN générant un visage à partir de différents styles*]
+
+## STYLEGAN - 2018
+
+Une des clés par rapport au GAN est l'utilisation de AdaIN:
+
+AdaIN(x_i, y) = y_{s,i} * (x_i - μ(x_i))/σ(x_i) + y_{b,i}
+
+Chaque feature map est normalisée séparément, mise à l'échelle et biaisée en fonction du style.
+
+Ensuite, on fait progresser la taille de l'image successivement!
+
+[*Diagramme technique comparant un générateur traditionnel avec un générateur basé sur le style*]
+
+## STYLEGAN - 2018
+
+L'entraînement d'un StyleGAN se fait taille par taille:
+- D'abord, on entraîne le générateur et le discriminateur avec des tailles d'images 4x4 jusqu'à stabilité
+- Ensuite on ajoute un bloc au deux pour doubler la taille et on entraîne de nouveau
+- Etc.
+
+On utilise aussi le bilinear upsampling plutôt que le nearest neighbor que nous avons vu précédemment.
+
+https://github.com/NVlabs/stylegan
+
+https://arxiv.org/pdf/1812.04948.pdf
+
+## [Image montrant des exemples de visages générés par StyleGAN avec différentes combinaisons de styles]
+
+## STYLEGAN 3 -2021
+
+Les versions subséquentes de StyleGAN visaient chacune à corriger des problèmes spécifiques.
+
+La documentation est assez complexe, mais exhaustive (avec vidéos):
+- https://nvlabs.github.io/stylegan2/versions.html
+
+Dans la V3, on vise à retirer le crénelage.
+
+[*Diagramme technique montrant l'architecture avancée de StyleGAN3*]
+
+## D'AUTRES MODÈLES
+
+- Least Squares GAN (LSGAN)
+- Cycle-Consistent GAN (CycleGAN)
+- Big GAN
+- Self-Attention GAN (SAGAN)
+- Siamese GAN (SiGAN)
+- Etc.
+
+https://machinelearningmastery.com/impressive-applications-of-generative-adversarial-networks/
+
+## POUR ALLER PLUS LOIN...
+
+Bon article sur les GAN: https://arxiv.org/pdf/1801.09195.pdf
+
+ThisPersonDoesNotExist: https://this-person-does-not-exist.com/en
+
+https://nvlabs.github.io/stylegan2/versions.html
+
+Image Inpainting: https://news.developer.nvidia.com/new-ai-imaging-technique-reconstructs-photos-with-realistic-results/?ncid=nv-twi-37107
+
+AI artists: https://aiartists.org/ai-generated-art-tools
+
+Applications des GAN: https://github.com/nashory/gans-awesome-applications
+
+## EXEMPLE COMPLET
+
+[*Section titre avec "EXEMPLE COMPLET" dans un grand cercle rouge numéroté 40*]
+
+## GÉNÉRATION DE TEXTURES
+
+Avec un GAN, il est possible de générer des textures pour les jeux vidéo.
+
+Encore une fois, le défi ici est d'avoir un bon ensemble d'entraînement.
+
+Regardons comment nous pourrions y parvenir en utilisant l'ensemble de données Cifar100:
+
+Nous utiliserons un WGAN:
+```python
+from keras.datasets import cifar100
+```
+
+Un WGAN utilise la distance de Wasserstein plutôt que la divergence de Kullback-Leibler ou celle de Jensen-Shannon.
+
+Sans entrer dans les détails, cette distance est considérée comme meilleure pour l'entraînement des GAN.
+
+## WASSERSTEIN GAN (WGAN)
+
+Basé sur les f-GAN.
+
+[*Algorithme détaillé du WGAN montrant les étapes d'initialisation, d'apprentissage du critique et du générateur*]
+
+## ÉTAPE 1
+
+```python
+class WGAN():
+    def __init__(self):
+        self.img_rows = 32
+        self.img_cols = 32
+        self.channels = 3
+        self.img_shape = (self.img_rows, self.img_cols, self.channels)
+        self.latent_dim = 100
+        
+        # Following parameter and optimizer set as recommended in paper
+        self.n_critic = 5
+        self.clip_value = 0.01
+        optimizer = RMSprop(lr=0.00005)
+        
+        # Build and compile the critic
+        self.critic = self.build_critic()
+        self.critic.compile(loss=self.wasserstein_loss,
+                            optimizer=optimizer,
+                            metrics=['accuracy'])
+        
+        # Build the generator
+        self.generator = self.build_generator()
+        
+        # The generator takes noise as input and generated imgs
+        z = Input(shape=(self.latent_dim,))
+        img = self.generator(z)
+        
+        # For the combined model we will only train the generator
+        self.critic.trainable = False
+        
+        # The critic takes generated images as input and determines
+        # validity
+        valid = self.critic(img)
+        
+        # The combined model (stacked generator and critic)
+        self.combined = Model(z, valid)
+        self.combined.compile(loss=self.wasserstein_loss,
+                              optimizer=optimizer,
+                              metrics=['accuracy'])
+```
+
+*code: Lanham M., Hands-On Deep Learning for Games, Packt Publishing, 2019.*
+
+Code d'initialisation et de création:
+- Forme pour l'image
+- paramétrage du WGAN
+- construction du discriminateur
+- construction du générateur
+- compilation du WGAN
+
+## ÉTAPE 2
+
+```python
+def build_critic(self):
+    model = Sequential()
+    model.add(Conv2D(16, kernel_size=3,
+                    strides=2, input_shape=self.img_shape,
+                    padding="same"))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(0.25))
+    model.add(Conv2D(32, kernel_size=3,
+                    strides=2, padding="same"))
+    model.add(ZeroPadding2D(padding=((0,
+                                    1), (0, 1))))
+    
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(0.25))
+    model.add(Conv2D(64, kernel_size=3,
+                    strides=2, padding="same"))
+    
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(0.25))
+    model.add(Conv2D(128, kernel_size=3,
+                    strides=1, padding="same"))
+    
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(1))
+    model.summary()
+    
+    img = Input(shape=self.img_shape)
+    validity = model(img)
+    return Model(img, validity)
+```
+
+*code: Lanham M., Hands-On Deep Learning for Games, Packt Publishing, 2019.*
+
+Création du discriminateur
+
+## ÉTAPE 3
+
+```python
+def build_generator(self):
+    model = Sequential()
+    model.add(Dense(128 * 8 * 8,
+                   activation="relu",
+                   input_dim=self.latent_dim))
+    model.add(Reshape((8, 8, 128)))
+    model.add(UpSampling2D())
+    model.add(Conv2D(128, kernel_size=4,
+                    padding="same"))
+    
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(Activation("relu"))
+    model.add(UpSampling2D())
+    model.add(Conv2D(64, kernel_size=4,
+                    padding="same"))
+    
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(Activation("relu"))
+    model.add(Conv2D(self.channels,
+                    kernel_size=4,
+                    padding="same"))
+    model.add(Activation("tanh"))
+    model.summary()
+    
+    noise = Input(shape=(self.latent_dim,))
+    img = model(noise)
+    return Model(noise, img)
+```
+
+*code: Lanham M., Hands-On Deep Learning for Games, Packt Publishing, 2019.*
+
+Création du générateur
+
+## ÉTAPE 4
+
+```python
+def train(self, epochs, batch_size=128, sample_interval=50):
+    (X_train, y), (_, _) = cifar100.load_data(label_mode='fine')
+    Z_train = []
+    cnt = 0
+    for i in range(0, len(y)):
+        if y[i] == 33:
+            cnt = cnt + 1
+            z = X_train[i]
+            Z_train.append(z)
+    
+    Z_train = np.reshape(Z_train, [500, 32, 32, 3])
+    Z_train = (Z_train.astype(np.float32) - 127.5) / 127.5
+    
+    valid = -np.ones((batch_size, 1))
+    fake = np.ones((batch_size, 1))
+    
+    for epoch in range(epochs):
+        for _ in range(self.n_critic):
+            idx = np.random.randint(0, Z_train.shape[0], batch_size)
+            imgs = Z_train[idx]
+            if epoch % sample_interval == 0:
+                self.save_images(imgs, epoch)
+            
+            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+            
+            gen_imgs = self.generator.predict(noise)
+            
+            d_loss_real = self.critic.train_on_batch(imgs, valid)
+            d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
+            d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+            
+            for l in self.critic.layers:
+                weights = l.get_weights()
+                weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
+                l.set_weights(weights)
+            
+            g_loss = self.combined.train_on_batch(noise, valid)
+```
+
+*code: Lanham M., Hands-On Deep Learning for Games, Packt Publishing, 2019.*
+
+Entraînement du réseau
+
+## RÉSULTATS
+
+Exemples de textures de type forêts.
+
+Vous pouvez facilement générer différents types de textures à l'aide de divers paramètres.
+
+Vous pouvez les utiliser comme textures ou champs de hauteur dans Unity ou un autre moteur de jeu.
+
+[*Image montrant une grille de textures générées ressemblant à des forêts en niveaux de gris*]
