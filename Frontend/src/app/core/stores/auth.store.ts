@@ -47,7 +47,7 @@ export const AuthStore = signalStore(
     ),
     update: (user: Omit<User, 'id'>) => {
       patchState(store, setPending());
-      const id: number = store.user()?.id || NaN;
+      const id: string = store.user()?.id || '';
       return userGateway.updateUser(id, user).pipe(
         tap(() => patchState(store, {user: { ...user, id: id }}, setSuccess())),
         catchError(async (err) => patchState(store, setError(err?.error?.message)))

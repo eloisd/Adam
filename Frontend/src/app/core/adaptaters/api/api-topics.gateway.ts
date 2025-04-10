@@ -4,28 +4,27 @@ import {HttpClient} from '@angular/common/http';
 import {Topic} from '../../models/topic.model';
 import {environment} from '../../../../environments/environment';
 import {Observable} from 'rxjs';
+import {PaginationParams, ResultsPagination, setHttpParamsQuery} from '../../features/query-entity.feature';
 
 export class ApiTopicsGateway extends TopicsGateway {
   readonly http = inject(HttpClient);
 
-  createTopic(topic: Topic): Observable<Topic> {
-    return this.http.post<Topic>(`${environment.apiUrl}/topics`, topic);
+  override createTopic(topic: Topic): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/topics`, topic);
   }
 
-  deleteTopic(id: number): Observable<void> {
+  deleteTopic(id: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/topics/${id}`);
   }
 
-  getTopicById(id: number): Observable<Topic> {
-    return this.http.get<Topic>(`${environment.apiUrl}/topics/${id}`);
+  getTopics(query: Partial<PaginationParams<Topic>>): Observable<ResultsPagination<Topic>> {
+    return this.http.get<ResultsPagination<Topic>>(`${environment.apiUrl}/topics`, {
+      params: setHttpParamsQuery(query)
+    });
   }
 
-  getTopics(): Observable<Topic[]> {
-    return this.http.get<Topic[]>(`${environment.apiUrl}/topics`);
-  }
-
-  updateTopic(topic: Topic): Observable<Topic> {
-    return this.http.patch<Topic>(`${environment.apiUrl}/topics/${topic.id}`, topic);
+  updateTopic(id: string, topic: Partial<Topic>): Observable<void> {
+    return this.http.patch<void>(`${environment.apiUrl}/topics/${topic.id}`, topic);
   }
 
 }

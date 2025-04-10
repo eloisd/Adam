@@ -1,20 +1,16 @@
-import {Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {MarkdownComponent} from "ngx-markdown";
-import Prism from 'prismjs';
+import {Component, Input} from '@angular/core';
+import {Message} from '../../../../core/models/message.model';
+import {MarkdownDisplayComponent} from '../../markdown-display/markdown-display.component';
 
 @Component({
   selector: 'app-chat-bubble-bot',
   standalone: true,
-    imports: [
-        MarkdownComponent
-    ],
+  imports: [
+    MarkdownDisplayComponent
+  ],
   templateUrl: './chat-bubble-bot.component.html',
   styleUrl: './chat-bubble-bot.component.scss'
 })
 export class ChatBubbleBotComponent {
-  @ViewChild('markdownContainer', { static: false }) markdownContainer!: ElementRef;
-
-  onMarkdownReady() {
-    Prism.highlightAll();
-  }
+  @Input() message!: Message;
 }

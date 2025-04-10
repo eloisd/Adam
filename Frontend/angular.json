@@ -25,19 +25,20 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
+              "src/assets",
               {
                 "glob": "**/*",
-                "input": "src/assets",
-                "output": "/assets"
+                "input": "./node_modules/highlight.js/lib/languages",
+                "output": "./assets/highlight.js/languages"
               }
             ],
             "styles": [
               "src/custom-theme.scss",
               "src/styles.scss",
-              "node_modules/prismjs/themes/prism.min.css"
+              "src/custom-highlight.scss",
+              "node_modules/highlight.js/styles/atom-one-light.min.css"
             ],
             "scripts": [
-              "node_modules/prismjs/prism.js"
             ]
           },
           "configurations": {
@@ -88,21 +89,20 @@
             ],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
+              "src/assets",
               {
                 "glob": "**/*",
-                "input": "src/assets",
-                "output": "/assets"
+                "input": "./node_modules/highlight.js/lib/languages",
+                "output": "./assets/highlight.js/languages"
               }
             ],
             "styles": [
               "src/custom-theme.scss",
               "src/styles.scss",
-              "node_modules/prismjs/themes/prism.min.css"
+              "src/custom-highlight.scss",
+              "node_modules/highlight.js/styles/atom-one-dark.min.css"
             ],
             "scripts": [
-              "node_modules/prismjs/prism.js",
-              "node_modules/prismjs/components/index.js",
-              "node_modules/clipboard/dist/clipboard.min.js"
             ]
           }
         }

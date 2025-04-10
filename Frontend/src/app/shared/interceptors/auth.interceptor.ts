@@ -22,7 +22,7 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && error.error?.message === 'Unauthorized') {
+      if (error.error?.statusCode === 401 && error.error?.message === 'Unauthorized') {
         authStore.setRefreshingToken(true);
 
         return authStore.refreshToken().pipe(

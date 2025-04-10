@@ -3,10 +3,19 @@
   align-items: center;
   flex-direction: column;
   flex-grow: 1;
+  max-width: 100%;
+  --chat-width: 46rem;
+  --display-logo: block;
+  --padding-left-bubble-bot: 34px;
 
   &.empty {
     justify-content: center;
   }
+}
+
+:host(.small) {
+  --display-logo: none;
+  --padding-left-bubble-bot: 0;
 }
 
 .message-list-container {
@@ -40,9 +49,10 @@
 
 .message-list-max-width {
   display: flex;
-  width: 100%;
-  max-width: 46rem;
+  width: var(--chat-width);
+  max-width: 100%;
   flex-direction: column;
   gap: 20px;
-  padding: 20px 0;
+  padding: 20px 1rem;
+  box-sizing: border-box;
 }

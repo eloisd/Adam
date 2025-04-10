@@ -1,0 +1,79 @@
+<!-- upload-dialog.component.html -->
+<h2 mat-dialog-title>Importer des fichiers pour RAG</h2>
+
+<mat-dialog-content>
+  <div
+    [ngClass]="dragAreaClass"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+
+    <div class="drag-area-content">
+      <mat-icon class="upload-icon">cloud_upload</mat-icon>
+      <h3>Glissez et déposez vos fichiers ici</h3>
+      <p>ou</p>
+      <button mat-raised-button color="primary">
+        Sélectionner des fichiers
+        <input
+          type="file"
+          [accept]="acceptedFileTypes"
+          (change)="onFileChange($event)"
+          multiple
+          class="file-input">
+      </button>
+      <p class="accepted-files">
+        Formats acceptés: PDF, Word, TXT, JSON
+      </p>
+    </div>
+  </div>
+
+  <div class="files-container" *ngIf="files.length > 0">
+    <h3>Fichiers sélectionnés</h3>
+
+    <mat-card *ngFor="let fileItem of files; let i = index" class="file-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar style="margin-right: .5rem; overflow: visible" class="{{ fileItem.file.type | fileTypeToClassCss }}-icon">description</mat-icon>
+        <mat-card-title style="padding-right: 2rem">{{ fileItem.file.name }}</mat-card-title>
+        <mat-card-subtitle>{{ (fileItem.file.size / 1024).toFixed(2) }} KB</mat-card-subtitle>
+        <button mat-icon-button color="warn" (click)="removeFile(i)" class="remove-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
+
+      <mat-card-content style="padding: 1rem;">
+        <form [formGroup]="fileItem.formGroup" class="file-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Type de document</mat-label>
+            <mat-select formControlName="document_type">
+              <mat-option *ngFor="let type of documentTypes" [value]="type">
+                {{ type }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="fileItem.formGroup.get('document_type')?.invalid && fileItem.formGroup.get('document_type')?.touched">
+              Type de document requis
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Titre / Sujet</mat-label>
+            <input matInput formControlName="title" placeholder="Entrez un titre descriptif">
+            <mat-error *ngIf="fileItem.formGroup.get('title')?.invalid && fileItem.formGroup.get('title')?.touched">
+              Titre requis
+            </mat-error>
+          </mat-form-field>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="files.length === 0"
+    (click)="uploadFiles()">
+    Importer ({{ files.length }} fichier{{ files.length > 1 ? 's' : '' }})
+  </button>
+</mat-dialog-actions>

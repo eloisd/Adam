@@ -47,6 +47,7 @@ $secondary-color-dark: #000000;
 
   @include mat.list-overrides((
     list-item-one-line-container-height: 36px,
+    list-item-focus-state-layer-color: none,
     active-indicator-shape: .5rem
   ));
 
@@ -72,7 +73,7 @@ $secondary-color-dark: #000000;
 }
 
 .mat-mdc-list-item:hover {
-  .mat-icon {
+  .mat-mdc-menu-trigger {
     display: block!important;
   }
 }
@@ -88,17 +89,14 @@ $secondary-color-dark: #000000;
     position: relative;
   }
 
-  a {
+  .topic-title {
     display: block;
     width: 100%;
     mask-image: linear-gradient(90deg, #000, #000 84%, transparent 89%, transparent);
   }
 
-  .mat-icon {
+  .mat-mdc-menu-trigger {
     display: none;
-    position: absolute;
-    top: 0;
-    right: 0;
   }
 }
 
@@ -112,9 +110,15 @@ $secondary-color-dark: #000000;
 
 .custom-modal-big.cdk-overlay-pane {
   transform: none;
+  max-height: 70%;
+  max-width: 70%;
 }
 .custom-modal.cdk-overlay-pane:not(.custom-modal-big) {
   transform: translateY(-20%);
+
+  .mat-mdc-dialog-container {
+    max-height: inherit;
+  }
 }
 
 .custom-modal.cdk-overlay-pane {
@@ -125,6 +129,10 @@ $secondary-color-dark: #000000;
   .mat-mdc-dialog-surface {
     box-shadow: rgba(0, 0, 0, 0.2) 4px 4px 16px;
     position: static;
+  }
+
+  .mat-mdc-dialog-container {
+    max-height: 70%;
   }
 
   .mat-mdc-dialog-inner-container {
@@ -218,6 +226,7 @@ app-chat-input .mdc-text-field--focused .mdc-notched-outline {
     @include mat.button-overrides((
       text-state-layer-color: rgba(0, 0, 0, 1),
       filled-container-color: #ef4444,
+      text-label-text-color: #ffffff,
     ));
 
     .mdc-button__label {

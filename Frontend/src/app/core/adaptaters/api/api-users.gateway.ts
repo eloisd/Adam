@@ -8,7 +8,7 @@ import {environment} from '../../../../environments/environment';
 export class ApiUsersGateway extends UsersGateway {
   readonly http = inject(HttpClient);
 
-  override updateUser(id: number, user: User): Observable<void> {
+  override updateUser(id: string, user: User): Observable<void> {
     return this.http.patch<void>(`${environment.apiUrl}/account/${id}`, user);
   }
 

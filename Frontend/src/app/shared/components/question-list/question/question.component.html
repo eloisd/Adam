@@ -1,0 +1,29 @@
+<div class="qcm-question-container">
+  <div class="question">
+    <h3>{{ question.content }}</h3>
+  </div>
+
+  <div class="answers">
+    <div
+      *ngFor="let answer of question.answers"
+      class="answer-item"
+      [class.selected]="selectedAnswerId === answer.id"
+      (click)="selectAnswer(answer.id)">
+      <input
+        type="radio"
+        [id]="'answer-' + answer.id"
+        name="answer"
+        [value]="answer.id"
+        [checked]="selectedAnswerId === answer.id">
+      <label [for]="'answer-' + answer.id">{{ answer.content }}</label>
+    </div>
+  </div>
+
+  <div class="actions" *ngIf="showSubmitButton">
+    <button
+      [disabled]="!selectedAnswerId"
+      (click)="onSubmit()">
+      Valider
+    </button>
+  </div>
+</div>

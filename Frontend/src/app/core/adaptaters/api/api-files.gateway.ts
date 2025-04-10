@@ -10,24 +10,37 @@ export class ApiFilesGateway extends FilesGateway {
   readonly http = inject(HttpClient);
   readonly fileService = inject(FileService);
 
-  deleteFile(id: number): Observable<void> {
+  override deleteFile(id: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/files/${id}`);
   }
 
-  downloadFile(file: FileModel): Observable<void> {
+  override downloadFile(file: FileModel): Observable<void> {
     return this.http.get(`${environment.apiUrl}/files/download?id=${file.id}`, {responseType: 'blob' }).pipe(
       map(blob => this.fileService.downloadBlob(file, blob))
     )
   }
 
-  uploadFile(topic_id: number, files: File[]): Observable<FileModel[]> {
+  override uploadFiles(topic_id: string, files: File[], filesModel: FileModel[]): Observable<FileModel[]> {
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
 
-    return this.http.post<FileModel[]>(`${environment.apiUrl}/files`, formData, { params: { topic_id: topic_id } });
+    files.forEach(file => formData.append('files', file));
+    filesModel.forEach(fileModel => formData.append('filesModel', JSON.stringify(fileModel)));
+
+    return this.http.post<FileModel[]>(
+      `${environment.apiUrl}/files`,
+      formData,
+      {
+        params: {
+          topic_id: topic_id
+        },
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
   }
 
-  getFilesByTopicId(topic_id: number): Observable<FileModel[]> {
+  override getFilesByTopicId(topic_id: string): Observable<FileModel[]> {
     return this.http.get<FileModel[]>(`${environment.apiUrl}/files`, { params: { topic_id: topic_id } });
   }
 

@@ -9,6 +9,10 @@ import {MessagesGateway} from '../ports/messages.gateway';
 import {ApiMessagesGateway} from './api/api-messages.gateway';
 import {FilesGateway} from '../ports/files.gateway';
 import {ApiFilesGateway} from './api/api-files.gateway';
+import {QuestionGateway} from '../ports/question.gateway';
+import {ApiQuestionGateway} from './api/api-question.gateway';
+import {ChatbotGateway} from '../ports/chatbot.gateway';
+import {ApiChatbotGateway} from './api/api-chatbot.gateway';
 
 export function provideGateways(): Provider[] {
   return [
@@ -17,5 +21,7 @@ export function provideGateways(): Provider[] {
     { provide: TopicsGateway, useFactory: () => new ApiTopicsGateway() },
     { provide: MessagesGateway, useFactory: () => new ApiMessagesGateway() },
     { provide: FilesGateway, useFactory: () => new ApiFilesGateway() },
+    { provide: QuestionGateway, useFactory: () => new ApiQuestionGateway() },
+    { provide: ChatbotGateway, useFactory: () => new ApiChatbotGateway() },
   ]
 }

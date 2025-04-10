@@ -1,4 +1,4 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject, OnInit, Signal} from '@angular/core';
 import {SidenavComponent} from '../../shared/components/sidenav/sidenav.component';
 import {
   MatDrawer,
@@ -14,6 +14,8 @@ import {TopicsStore} from '../../core/stores/topics.store';
 import {ActivatedRoute} from '@angular/router';
 import {MessagesStore} from '../../core/stores/messages.store';
 import {FilesStore} from '../../core/stores/files.store';
+import {QuestionListComponent} from '../../shared/components/question-list/question-list.component';
+import {QuestionsStore} from '../../core/stores/questions.store';
 
 @Component({
   selector: 'app-home',
@@ -26,15 +28,16 @@ import {FilesStore} from '../../core/stores/files.store';
     MatDrawerContainer,
     MatDrawer,
     MatDrawerContent,
-    ChatComponent
+    ChatComponent,
+    QuestionListComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {
   readonly topicsStore = inject(TopicsStore);
-  readonly messagesStore = inject(MessagesStore);
-  readonly filesStore = inject(FilesStore);
+  readonly questionsStore = inject(QuestionsStore);
+  readonly questionsSize: Signal<number> = this.questionsStore.size;
   hasAppChatScrolled = false;
 
   constructor(private route: ActivatedRoute) {
@@ -44,13 +47,7 @@ export class HomeComponent implements OnInit {
     this.topicsStore.fetchTopics();
     this.route.paramMap.subscribe((params) => {
       const topicId = params.get('topicid');
-      if (topicId) {
-        this.messagesStore.fetchMessages(+topicId);
-        this.filesStore.fetchFiles(+topicId);
-      } else {
-        this.messagesStore.fetchMessages(NaN);
-        this.filesStore.fetchFiles(NaN);
-      }
+      this.topicsStore.selectEntity(topicId);
     })
   }
 

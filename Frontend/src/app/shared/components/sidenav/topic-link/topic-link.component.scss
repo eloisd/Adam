@@ -9,6 +9,7 @@
 
 .topic-link {
   padding: .5rem;
+  user-select: none;
 
   button {
     position: absolute;
@@ -31,7 +32,7 @@
     padding: 0;
   }
 
-  a {
+  .topic-title {
     text-decoration: none;
     color: inherit;
   }

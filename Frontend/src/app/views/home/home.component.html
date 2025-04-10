@@ -5,8 +5,8 @@
   <mat-sidenav-content style="display: flex; flex-direction: column">
     <app-header (openSidenav)="sidenav.open()" [isSidenavOpen]="sidenav.opened" [class.shadow-header]="hasAppChatScrolled"></app-header>
     <mat-drawer-container class="main-container">
-      <mat-drawer #drawer mode="side">
-        <button (click)="drawer.toggle()">toggle</button>
+      <mat-drawer #drawer mode="side" [opened]="questionsSize() > 0" class="question-list-drawer">
+        <app-question-list></app-question-list>
       </mat-drawer>
       <mat-drawer-content class="chat-content">
         <app-chat (scroll)="onScrollAppChat($event)"></app-chat>

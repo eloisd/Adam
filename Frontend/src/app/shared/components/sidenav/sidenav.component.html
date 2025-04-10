@@ -6,7 +6,7 @@
     <button mat-icon-button matTooltip="Rechercher des topics">
       <mat-icon svgIcon="search-sidenav"></mat-icon>
     </button>
-    <button mat-icon-button matTooltip="Nouveau topic" [routerLink]="['/']">
+    <button mat-icon-button matTooltip="Nouveau topic" (click)="createNewTopic()">
       <mat-icon svgIcon="new-topic"></mat-icon>
     </button>
   </div>
@@ -19,13 +19,15 @@
     </a>
   </mat-list-item>
   <div class="topics-list">
-    <div class="topics-sublist">
-      <div class="topic-sublist-name">
-        <h3>Aujourd'hui</h3>
+    @for (group of groupedEntities(); track group.title) {
+      <div class="topics-sublist">
+        <div class="topic-sublist-name">
+          <h3>{{ group.title }}</h3>
+        </div>
+        @for (topic of group.topics; track topic.id) {
+          <app-topic-link [topic]="topic"></app-topic-link>
+        }
       </div>
-      @for (topic of topics(); track topic.id) {
-        <app-topic-link [topic]="topic"></app-topic-link>
-      }
-    </div>
+    }
   </div>
 </mat-nav-list>

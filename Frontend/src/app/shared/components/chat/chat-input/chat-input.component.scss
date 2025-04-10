@@ -2,8 +2,11 @@
 
 :host {
   display: flex;
-  width: 46rem;
+  width: var(--chat-width);
+  max-width: 100%;
   position: relative;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 mat-form-field {

@@ -6,10 +6,27 @@ import {HomeComponent} from './views/home/home.component';
 import {AuthGuard} from './shared/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'signin', component: SignInComponent },
-  { path: 'signup', component: SignUpComponent },
-  { path: 'logout', component: LogoutComponent },
-  { path: '', component: HomeComponent, canActivate: [AuthGuard] },
-  { path: 'topic/:topicid', component: HomeComponent, canActivate: [AuthGuard] },
+  {
+    path: 'signin',
+    loadComponent: () => import('./views/sign-in/sign-in.component').then(m => m.SignInComponent)
+  },
+  {
+    path: 'signup',
+    loadComponent: () => import('./views/sign-up/sign-up.component').then(m => m.SignUpComponent)
+  },
+  {
+    path: 'logout',
+    loadComponent: () => import('./views/logout/logout.component').then(m => m.LogoutComponent)
+  },
+  {
+    path: '',
+    canActivate: [AuthGuard] ,
+    loadComponent: () => import('./views/home/home.component').then(m => m.HomeComponent)
+  },
+  {
+    path: 'topic/:topicid',
+    canActivate: [AuthGuard],
+    loadComponent: () => import('./views/home/home.component').then(m => m.HomeComponent)
+  },
   { path: '**', redirectTo: '' },
 ];

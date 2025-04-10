@@ -9,6 +9,7 @@ import {passwordMatchValidator} from './validators/password-match.validator';
 import {NgIf} from '@angular/common';
 import {AuthStore} from '../../core/stores/auth.store';
 import {toObservable} from '@angular/core/rxjs-interop';
+import {UserRegister} from '../../core/models/user.model';
 
 @Component({
   selector: 'app-sign-up',
@@ -60,12 +61,12 @@ export class SignUpComponent {
   signUp() {
     const formValue = this.form.getRawValue();
     if (!formValue.lastname || !formValue.firstname || !formValue.email || !formValue.password) return;
-    this.authStore.register({
-        lastname: formValue.lastname,
-        firstname: formValue.firstname,
-        email: formValue.email,
-        password: formValue.password
-    }).subscribe({
+    this.authStore.register(new UserRegister(
+      formValue.lastname,
+      formValue.firstname,
+      formValue.email,
+      formValue.password
+    )).subscribe({
       next: () => {
         this.router.navigate(['signin']);
       }

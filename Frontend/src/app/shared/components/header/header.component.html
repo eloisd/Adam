@@ -4,7 +4,7 @@
       <button mat-icon-button (click)="openSidenav.emit()" matTooltip="Ouvrir la barre latérale">
         <mat-icon svgIcon="open-sidenav"></mat-icon>
       </button>
-      <button mat-icon-button matTooltip="Nouveau topic" [routerLink]="['/']">
+      <button mat-icon-button matTooltip="Nouveau topic" (click)="createNewTopic()">
         <mat-icon svgIcon="new-topic"></mat-icon>
       </button>
     }
@@ -24,7 +24,7 @@
 </mat-toolbar>
 <mat-menu #documentMenu="matMenu" class="custom-menu" xPosition="before">
   @for (file of files(); track file.id) {
-    <button mat-menu-item (click)="download(file)">
+    <button mat-menu-item (click)="showFileManagerModal(file)">
       <span>{{ file.name }}</span>
     </button>
   }

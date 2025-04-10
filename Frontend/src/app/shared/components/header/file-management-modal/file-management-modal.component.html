@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>
+  <mat-icon class="file-icon">{{file()?.document_type?.includes('image') ? 'image' : 'description'}}</mat-icon>
+  Détails du fichier
+  <mat-icon *ngIf="file()?.is_ragged" class="rag-badge" matTooltip="Ce fichier a été traité par RAG">check_circle</mat-icon>
+</h2>
+
+<mat-dialog-content style="padding-top: 1rem">
+  <div class="loading-overlay" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Traitement RAG en cours...</span>
+  </div>
+
+  <form [formGroup]="fileForm" style="display: flex; gap: .5rem; flex-direction: column;">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nom du fichier</mat-label>
+      <input matInput formControlName="name">
+      <mat-error *ngIf="fileForm.get('name')?.hasError('required')">
+        Le nom du fichier est requis
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Type de document</mat-label>
+      <mat-select formControlName="document_type">
+        <mat-option *ngFor="let type of documentTypes" [value]="type">
+          {{ type }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Titre / Sujet</mat-label>
+      <input matInput formControlName="description" placeholder="Entrez un titre descriptif">
+      <mat-error *ngIf="fileForm.get('description')?.invalid && fileForm.get('description')?.touched">
+        Titre requis
+      </mat-error>
+    </mat-form-field>
+
+    <div class="rag-status-container">
+      <div class="rag-status">
+        <span>Statut RAG:</span>
+        <div class="status-indicator">
+          <span class="status-dot" [ngClass]="{'status-active': file()?.is_ragged}"></span>
+          <span>{{file()?.is_ragged ? 'Traité' : 'Non traité'}}</span>
+        </div>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" style="padding: 1rem;">
+  <button mat-button (click)="closeDialog()" class="btn-cancel" [disabled]="isLoading">Annuler</button>
+  <button mat-button (click)="deleteFile()" class="btn-delete" [disabled]="isLoading">
+    <mat-icon>delete</mat-icon> Supprimer
+  </button>
+  <button mat-stroked-button color="primary" (click)="startRag()" [disabled]="isLoading || file()?.is_ragged">
+    <mat-icon>autorenew</mat-icon> Traiter avec RAG
+  </button>
+  <button mat-button color="primary" (click)="saveChanges()" *ngIf="isEditing" [disabled]="fileForm.invalid || isLoading">
+    <mat-icon>save</mat-icon> Enregistrer
+  </button>
+</mat-dialog-actions>
