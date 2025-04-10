@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  BadRequestException, Body,
   Controller, Delete, Get,
   Param,
   Post, Query, Res,
@@ -14,6 +14,8 @@ import { Express, Response } from 'express';
 import { diskStorage } from "multer";
 import * as path from "path";
 import * as crypto from "crypto";
+import { FileEntity } from '../../entities/file.entity';
+import { UploadDto } from './dto/updload.dto';
 
 @UseGuards(AuthGuard("jwt-access"))
 @Controller("files")
@@ -34,30 +36,38 @@ export class FilesController {
     }),
   )
   async uploadFile(
-    @Query("topic_id") topic_id: number,
+    @Query("topic_id") topic_id: string,
     @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() uploadDto: UploadDto,
   ) {
     if (!files || files.length === 0) {
       throw new BadRequestException("Aucun fichier reçu");
     }
 
-    return this.filesService.uploadFiles(topic_id, files);
+    let fileEntities: FileEntity[] = [];
+    if (Array.isArray(uploadDto.filesModel)) {
+      fileEntities = uploadDto.filesModel.map((value) => JSON.parse(value));
+    } else {
+      fileEntities = [JSON.parse(uploadDto.filesModel)];
+    }
+
+    return this.filesService.uploadFiles(topic_id, files, fileEntities);
   }
 
   @Get('download')
-  async downloadFile(@Query('id') id: number, @Res() res: Response) {
+  async downloadFile(@Query('id') id: string, @Res() res: Response) {
     const { filename, filePath } = await this.filesService.downloadFile(id);
 
     res.download(filePath, filename);
   }
 
   @Get()
-  async getFilesByTopicId(@Query('topic_id') topic_id: number) {
+  async getFilesByTopicId(@Query('topic_id') topic_id: string) {
     return this.filesService.getFilesByTopicId(topic_id);
   }
 
   @Delete(':id')
-  async deleteFile(@Param('id') id: number) {
+  async deleteFile(@Param('id') id: string) {
     return this.filesService.deleteFile(id);
   }
 }

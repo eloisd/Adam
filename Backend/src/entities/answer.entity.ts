@@ -3,17 +3,17 @@ import { QuestionEntity } from './question.entity';
 
 @Entity({ name: 'answer' })
 export class AnswerEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ length: 255 })
-  answer: string;
+  content: string;
 
   @Column({ type: 'boolean' })
-  correct: boolean;
+  is_correct: boolean;
 
   @Column()
-  question_id: number;
+  question_id: string;
 
   @ManyToOne(() => QuestionEntity, (question) => question.answers, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_id' })

@@ -1,22 +1,25 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { TopicEntity } from './topic.entity';
 
 @Entity({ name: 'message' })
 export class MessageEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'boolean' })
-  isBot: boolean;
+  @Column()
+  author: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column()
+  status: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
   @Column()
-  topic_id: number;
+  topic_id: string;
 
   @ManyToOne(() => TopicEntity, (topic) => topic.messages, { onDelete: 'NO ACTION', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'topic_id' })

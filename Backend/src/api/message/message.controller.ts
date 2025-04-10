@@ -1,18 +1,26 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { MessageService } from "./message.service";
-import { MessageEntity } from "../../entities/message.entity";
+import { PaginationParams } from "../../common/decorators/pagination.decorator";
+import { AuthGuard } from "@nestjs/passport";
 
+@UseGuards(AuthGuard("jwt-access"))
 @Controller("messages")
 export class MessageController {
   constructor(private messageService: MessageService) {}
 
   @Get()
-  getMessagesByTopicId(@Query() filters: Partial<MessageEntity>) {
-    return this.messageService.findWithFilters(filters);
-  }
+  async getMessagesByTopicId(
+    @Query("topic_id") topic_id: string,
+    @Query() paginationParams: PaginationParams,
+  ) {
+    const [items, total] = await this.messageService.getMessagesByTopicId(
+      topic_id,
+      paginationParams,
+    );
 
-  @Post()
-  createMessage(@Body() message: MessageEntity) {
-    return this.messageService.createMessage(message);
+    return {
+      items: items,
+      total: total,
+    };
   }
 }

@@ -1,10 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
 import { TopicEntity } from './topic.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ length: 45 })
   firstname: string;
@@ -17,6 +17,9 @@ export class UserEntity {
 
   @Column({ length: 255, unique: true })
   email: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at: Date;
 
   @OneToMany(() => TopicEntity, (topic) => topic.user, { cascade: true })
   topics: TopicEntity[];

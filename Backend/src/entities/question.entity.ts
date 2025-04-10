@@ -1,11 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn } from 'typeorm';
 import { TopicEntity } from './topic.entity';
 import { AnswerEntity } from './answer.entity';
 
 @Entity({ name: 'question' })
 export class QuestionEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'text' })
   content: string;
@@ -14,7 +14,10 @@ export class QuestionEntity {
   isQCM: boolean;
 
   @Column()
-  topic_id: number;
+  topic_id: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at: Date;
 
   @ManyToOne(() => TopicEntity, (topic) => topic.questions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'topic_id' })

@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { MessageEntity } from '../../entities/message.entity';
-import { Repository } from 'typeorm';
-import { UserEntity } from '../../entities/user.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { MessageEntity } from "../../entities/message.entity";
+import { Repository } from "typeorm";
+import { PaginationParams } from "../../common/decorators/pagination.decorator";
 
 @Injectable()
 export class MessageService {
@@ -11,19 +11,29 @@ export class MessageService {
     private messageRepository: Repository<MessageEntity>,
   ) {}
 
-  async findWithFilters(filters: Partial<MessageEntity>) {
-    const query = this.messageRepository.createQueryBuilder('message');
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        query.andWhere(`message.${key} = :${key}`, { [key]: value });
-      }
+  getMessagesByTopicId(topic_id: string, paginationParams?: PaginationParams) {
+    return this.messageRepository.findAndCount({
+      where: { topic_id: topic_id },
+      skip: paginationParams?.offset,
+      take: paginationParams?.limit,
+      order: {
+        [paginationParams?.orderBy || "id"]:
+          paginationParams?.orderDirection || "ASC",
+      },
     });
-
-    return query.getMany();
   }
 
-  createMessage(message: MessageEntity) {
-    return this.messageRepository.save(message);
+  getMessageById(id: string) {
+    return this.messageRepository.findOne({
+      where: { id: id },
+    });
+  }
+
+  async createMessage(message: MessageEntity) {
+    await this.messageRepository.save(message);
+  }
+
+  async updateMessage(id: string, message: Partial<MessageEntity>) {
+    await this.messageRepository.update(id, message);
   }
 }

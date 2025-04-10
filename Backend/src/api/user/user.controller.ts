@@ -1,8 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { UserEntity } from '../../entities/user.entity';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @UseGuards(AuthGuard('jwt-access'))
@@ -11,8 +9,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  create(@Body() createAccountDto: CreateUserDto) {
-    return this.userService.create(createAccountDto);
+  create(@Body() user: UserEntity) {
+    return this.userService.create(user);
   }
 
   @Get()
@@ -21,20 +19,20 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id') id: string) {
     return this.userService.findById(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: number,
-    @Body() updateAccountDto: UpdateUserDto,
+    @Param('id') id: string,
+    @Body() user: Partial<UserEntity>,
   ) {
-    return this.userService.update(id, updateAccountDto);
+    return this.userService.update(id, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
+  remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
 }

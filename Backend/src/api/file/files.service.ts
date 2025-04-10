@@ -1,40 +1,39 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity } from '../../entities/file.entity';
 import { Repository } from 'typeorm';
-import * as path from 'node:path';
 import * as fs from 'fs-extra';
+import * as path from 'node:path';
 
 @Injectable()
-export class FilesService {
+export class FilesService implements OnModuleInit {
   constructor(
     @InjectRepository(FileEntity)
     private readonly fileRepository: Repository<FileEntity>,
   ) {  }
 
-  async uploadFiles(topic_id: number, files: Express.Multer.File[]) {
-    const fileEntityList = files.map((file) => {
-      const parse = path.parse(file.originalname)
-      const newFile = new FileEntity();
-      newFile.topic_id = topic_id;
-      newFile.name = parse.name;
-      newFile.path = file.path;
-      newFile.size = file.size;
-      newFile.mimetype = file.mimetype;
-      newFile.ext = parse.ext;
-      return newFile;
-    });
-
-    const savedFiles = await this.fileRepository.save(fileEntityList)
-
-    savedFiles.forEach((file) => {
-      file.url = `http://localhost:3000/api/files/download?id=${file.id}`;
-    })
-
-    return this.fileRepository.save(savedFiles);
+  async onModuleInit() {
+    await this.ensureDirectories();
   }
 
-  async downloadFile(id: number) {
+  private async ensureDirectories() {
+    const uploadsDir = path.join(process.cwd(), "uploads");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+  }
+
+  async uploadFiles(topic_id: string, files: Express.Multer.File[], fileEntities: FileEntity[]) {
+    const fileEntityList = fileEntities.map((value, index) => {
+      value.path = files[index].path;
+
+      return value;
+    });
+
+    return this.fileRepository.save(fileEntityList);
+  }
+
+  async downloadFile(id: string) {
     const file = await this.fileRepository.findOne({ where: { id } });
 
     if (!file) {
@@ -44,11 +43,19 @@ export class FilesService {
     return { filename: file.name, filePath: file.path };
   }
 
-  getFilesByTopicId(topic_id: number) {
+  getFilesByTopicId(topic_id: string) {
     return this.fileRepository.find({ where: { topic_id } });
   }
 
-  async deleteFile(id: number) {
+  async getFileById(id: string) {
+    const file = await this.fileRepository.findOne({ where: { id } });
+    if (!file) {
+      throw new NotFoundException('Fichier non trouvé');
+    }
+    return file;
+  }
+
+  async deleteFile(id: string) {
     const file = await this.fileRepository.findOne({ where: { id } });
     if (!file) {
       throw new NotFoundException('Fichier non trouvé');

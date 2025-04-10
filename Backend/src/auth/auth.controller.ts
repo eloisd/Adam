@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '../api/user/dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
+import { UserEntity } from '../entities/user.entity';
 
 @Controller("auth")
 export class AuthController {
@@ -25,8 +25,8 @@ export class AuthController {
 
   @Post("register")
   @HttpCode(HttpStatus.OK)
-  async register(@Body() body: CreateUserDto, @Res() res: Response) {
-    await this.authService.register(body);
+  async register(@Body() user: UserEntity, @Res() res: Response) {
+    await this.authService.register(user);
 
     return res.json({ message: "Utilisateur créé" });
   }

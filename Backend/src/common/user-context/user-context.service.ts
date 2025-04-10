@@ -6,7 +6,7 @@ import { Request } from 'express';
 export class UserContextService {
   constructor(@Inject(REQUEST) private readonly request: Request) {}
 
-  getUserId(): number | undefined {
+  getUserId(): string | undefined {
     return this.request['user']?.id;
   }
 }

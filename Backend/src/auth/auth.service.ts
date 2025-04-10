@@ -2,7 +2,6 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from "../api/user/user.service";
 import * as bcrypt from 'bcryptjs';
-import { CreateUserDto } from '../api/user/dto/create-user.dto';
 import { UserEntity } from '../entities/user.entity';
 import { jwtConstants } from './constants';
 
@@ -35,7 +34,7 @@ export class AuthService {
     };
   }
 
-  async register(userInfo: CreateUserDto) {
+  async register(userInfo: UserEntity) {
     const existingUser = await this.userService.findWithFilters({ email: userInfo.email });
     if (existingUser.length > 0) {
       throw new ConflictException('Cet email est déjà utilisé');
@@ -69,11 +68,11 @@ export class AuthService {
     });
   }
 
-  generateAccessToken(payload: {email: string, sub: number}) {
+  generateAccessToken(payload: {email: string, sub: string}) {
     return this.jwtService.sign(payload, { expiresIn: '15m', secret: jwtConstants.JWT_SECRET });
   }
 
-  generateRefreshToken(payload: {email: string, sub: number}) {
+  generateRefreshToken(payload: {email: string, sub: string}) {
     return this.jwtService.sign(payload, { expiresIn: '7d', secret: jwtConstants.JWT_REFRESH_SECRET });
   }
 
