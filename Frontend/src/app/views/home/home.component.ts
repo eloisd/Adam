@@ -1,35 +1,36 @@
 import {Component, inject, OnInit, Signal} from '@angular/core';
 import {SidenavComponent} from '../../shared/components/sidenav/sidenav.component';
 import {
-  MatDrawer,
-  MatDrawerContainer, MatDrawerContent,
+  MatDrawer, MatDrawerContainer,
+  MatDrawerContent,
   MatSidenav,
   MatSidenavContainer,
   MatSidenavContent
 } from '@angular/material/sidenav';
-import {environment} from '../../../environments/environment';
 import {HeaderComponent} from '../../shared/components/header/header.component';
 import {ChatComponent} from '../../shared/components/chat/chat.component';
 import {TopicsStore} from '../../core/stores/topics.store';
 import {ActivatedRoute} from '@angular/router';
-import {MessagesStore} from '../../core/stores/messages.store';
-import {FilesStore} from '../../core/stores/files.store';
 import {QuestionListComponent} from '../../shared/components/question-list/question-list.component';
 import {QuestionsStore} from '../../core/stores/questions.store';
+import {ResizableDrawerComponent} from '../../shared/components/resizable-drawer/resizable-drawer.component';
+import {DrawerComponent} from '../../shared/components/resizable-drawer/drawer/drawer.component';
+import {DrawerContentComponent} from '../../shared/components/resizable-drawer/drawer-content/drawer-content.component';
 
 @Component({
   selector: 'app-home',
+  standalone: true,
   imports: [
     MatSidenavContainer,
     MatSidenavContent,
     MatSidenav,
     SidenavComponent,
     HeaderComponent,
-    MatDrawerContainer,
-    MatDrawer,
-    MatDrawerContent,
     ChatComponent,
-    QuestionListComponent
+    QuestionListComponent,
+    ResizableDrawerComponent,
+    DrawerComponent,
+    DrawerContentComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'

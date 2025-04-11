@@ -1,0 +1,25 @@
+<div
+  class="drawer"
+  [ngClass]="{'closed': !drawer.opened}"
+  [style.width.px]="drawerWidth"
+  [class.transition-none]="isResizing"
+>
+  <ng-content select="app-drawer"></ng-content>
+</div>
+
+<!-- Barre de redimensionnement -->
+<div
+   class="resize-handle"
+   [ngClass]="{'active': isResizing, 'hidden': !drawer.opened}"
+   (mousedown)="startResizing($event)"
+   [style.left.px]="drawerWidth"
+></div>
+
+<div
+  class="main-content"
+  [style.width]="drawer.opened ? 'calc(100% - ' + drawerWidth + 'px)' : '100%'"
+  [style.box-shadow]="drawer.opened ? 'rgba(0, 0, 0, 0.075) 0 0 18px' : ''"
+  [class.transition-none]="isResizing"
+>
+  <ng-content select="app-drawer-content"></ng-content>
+</div>

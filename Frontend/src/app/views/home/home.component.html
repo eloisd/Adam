@@ -4,13 +4,14 @@
   </mat-sidenav>
   <mat-sidenav-content style="display: flex; flex-direction: column">
     <app-header (openSidenav)="sidenav.open()" [isSidenavOpen]="sidenav.opened" [class.shadow-header]="hasAppChatScrolled"></app-header>
-    <mat-drawer-container class="main-container">
-      <mat-drawer #drawer mode="side" [opened]="questionsSize() > 0" class="question-list-drawer">
+
+    <app-resizable-drawer>
+      <app-drawer [opened]="questionsSize() > 0" style="min-width: 250px">
         <app-question-list></app-question-list>
-      </mat-drawer>
-      <mat-drawer-content class="chat-content">
+      </app-drawer>
+      <app-drawer-content style="min-width: 450px">
         <app-chat (scroll)="onScrollAppChat($event)"></app-chat>
-      </mat-drawer-content>
-    </mat-drawer-container>
+      </app-drawer-content>
+    </app-resizable-drawer>
   </mat-sidenav-content>
 </mat-sidenav-container>

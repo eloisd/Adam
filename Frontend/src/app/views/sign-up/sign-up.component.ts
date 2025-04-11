@@ -67,9 +67,7 @@ export class SignUpComponent {
       formValue.email,
       formValue.password
     )).subscribe({
-      next: () => {
-        this.router.navigate(['signin']);
-      }
+      next: () => this.router.navigate(['signin']),
     })
   }
 

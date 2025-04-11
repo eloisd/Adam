@@ -85,7 +85,7 @@ export class ChatbotService {
     let lastP: string | null = null;
     let lastO: string | null = null;
 
-    // Fonction utilitaire pour envoyer un patch avec compression de contexte
+    // Fonction utilitaire pour envoyer un patch
     const sendPatch = async (p: string, o: string, v: any) => {
       let patch: any = {};
       if (p !== lastP) {

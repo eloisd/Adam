@@ -1,0 +1,56 @@
+:host {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background-color: #fff;
+}
+
+.drawer {
+  height: 100%;
+  background-color: #fff;
+  overflow: hidden;
+  transition: width 0.1s ease-in-out;
+
+  &.transition-none {
+    transition: none;
+  }
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(200, 200, 200, 0.3);
+  transition: width 0.1s ease-in-out;
+  cursor: ew-resize;
+  z-index: 6;
+  transform: translateX(-2px);
+}
+
+.resize-handle:hover {
+  width: 2px;
+}
+
+.resize-handle.active {
+  width: 4px;
+}
+
+.resize-handle.hidden {
+  display: none;
+}
+
+.main-content {
+  position: absolute;
+  height: 100%;
+  background-color: #fff;
+  overflow: hidden;
+  z-index: 5;
+  transition: width 0.1s ease-in-out;
+  right: 0;
+
+  &.transition-none {
+    transition: none;
+  }
+}
