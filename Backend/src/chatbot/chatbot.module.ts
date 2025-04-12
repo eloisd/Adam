@@ -3,14 +3,14 @@ import { ChatbotService } from "./chatbot.service";
 import { ChatbotController } from "./chatbot.controller";
 import { ApiModule } from "../api/api.module";
 import { PromptService } from "./prompt/prompt.service";
-import { ChromadbService } from "./vector-store/chromadb/chromadb.service";
+import { ChromaDbService } from "./vector-store/chromadb/chromadb.service";
 import { OpenaiService } from "./llm/openai/openai.service";
 import { RagService } from './rag/rag.service';
 import { RagController } from './rag/rag.controller';
 
 @Module({
   imports: [ApiModule],
-  providers: [ChatbotService, PromptService, ChromadbService, OpenaiService, RagService],
+  providers: [ChatbotService, PromptService, ChromaDbService, OpenaiService, RagService],
   controllers: [ChatbotController, RagController],
 })
 export class ChatbotModule {}

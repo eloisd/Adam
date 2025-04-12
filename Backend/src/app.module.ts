@@ -4,7 +4,6 @@ import { AuthModule } from "./auth/auth.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AvatarModule } from "./avatar/avatar.module";
 import { CommonModule } from "./common/common.module";
-import { RagModule } from "./chatbot/rag/rag.module";
 import { ConfigModule } from "@nestjs/config";
 import { ChatbotModule } from "./chatbot/chatbot.module";
 import { RouterModule } from "@nestjs/core";
@@ -29,7 +28,6 @@ import { RouterModule } from "@nestjs/core";
     AuthModule,
     AvatarModule,
     CommonModule,
-    RagModule,
     ChatbotModule,
     RouterModule.register([
       {
