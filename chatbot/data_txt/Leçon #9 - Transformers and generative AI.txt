@@ -1,0 +1,499 @@
+# ATTENTION IS ALL YOU NEED
+
+## Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca        Kevin_Bouchard@uqac.ca
+
+## TABLE DES MATIÈRES
+
+1. Introduction
+2. Attention is all you need
+3. Un bon transformeur
+4. Encodage de positions
+5. Modèles de langage
+
+## RÉSUMÉ
+
+- Donc, après tous ces cours sur le deep learning, que peut-on réellement retenir?
+- Nous semblons toujours à des années lumières de l'état de l'art, pourtant, nous avons maintenant la majorité des pièces du puzzle entre nos mains
+- Dans ce module, nous verrons les deux derniers morceaux révolutionnaires qui ont été clés dans les développements des dernières années:
+  - L'attention
+  - Et les transformeurs
+
+## ATTENTION IS ALL YOU NEED
+
+- Les mécanismes d'attentions sont devenus très populaires au cours des dernières années
+- Ils sont particulièrement efficaces lorsqu'on traite de séquences et séries temporelles
+  - Ceux-ci permettent de réellement se concentrer sur les aspects importants d'une séquence sans égard à la distance du début ou de la fin de celle-ci
+- L'intuition derrière le mécanisme est encore une fois inspirée de la biologie
+- Notre cerveau n'analyse jamais entièrement l'information d'un seul coup
+
+## MÉCANISME D'ATTENTION
+
+- Le mécanisme d'attention se décrit comme étant le mapping entre:
+  - Une requête
+  - Un ensemble de paires clé-valeur à une sortie
+
+[L'image montre un diagramme d'attention illustrant comment les mots d'une phrase "How was your day" sont mis en correspondance avec des mots français, montrant les poids d'attention entre les mots avec une échelle d'importance du bleu au noir]
+
+- Pour chaque requête sur un état (par exemple la dernière sortie du décodeur s_{t-1})
+- Le modèle d'attention permet d'obtenir une table qui montre l'attention que nous devons à chaque clé (dans notre cas les états cachés de l'encodeur)
+
+[La figure montre un schéma avec s_{t-1} qui pointe vers un "livre" qui produit une table d'attention avec des valeurs pour h_1 (0.1), h_2 (0.6), h_3 (0.2), h_4 (0.1)]
+
+## VERSION ORIGINALE
+
+- La version originale de Bahdanau, Cho & Bengio visait le format séquence à séquence
+  p(y_t|y_1,...,y_{t-1},x) = g(y_{t-1},s_t,c_t)
+  s_t = f(s_{t-1},y_{t-1},c_t)
+
+- s_t est un RNN (de votre choix)
+- c_t est un vecteur de contexte qui dépend de la séquence d'annotations
+  c_t = \sum_{j=1}^{T_x} \alpha_{tj}h_j
+
+- h_j = [\overrightarrow{h_j}, \overleftarrow{h_j}], la concaténation des deux directions
+
+[L'image montre un schéma d'encodeur RNN bidirectionnel avec les états cachés h_1 à h_T et les connexions d'attention]
+
+## VERSION ORIGINALE
+
+- α_{tj}h_j représente la somme pondérée des sorties de l'encodeur
+- α_{tj} est l'attention et se trouve avec le Softmax α_{tj} = \frac{\exp(e_{tj})}{\sum_{k=1}^{T_x} \exp(e_{tk})}
+- Il s'agissait donc grosso modo d'associer une importance aux mots en entrée par rapport à ceux en sortie via les 4 étapes:
+
+1. Calcul de l'alignement e_{tj} = a(s_{t-1}, h_j)
+   - En général, il s'agit d'un petit réseau dense e_{tj} = v_a^T \tanh(W_a s_{t-1} + U_a h_j)
+   
+   [Schéma montrant que e_{tj} est un scalaire, avec dimension 1 × d_{att} et après activation d_{att} × 1]
+   
+   d_{att} est choisie (e.g. 256)
+
+## VERSION ORIGINALE
+
+2. Normalisation via le softmax
+- Supposons par exemple 3 valeurs d'énergie basé sur h = [[1,-1],[0,2],[-1,0.5]] et s_{t-1} = [0.5,0.1]
+- En supposant pour h_1 que W_a s_{t-1} + U_a h_1 = [0.27,0.13,-0.49], l'activation est [0.263,0.129,-0.454]
+- Si le vecteur v_a^T = [0.2,0.5,-0.3] alors e_{t1} = 0.2 × 0.263 + 0.5 × 0.129 + (-0.3) × (-0.454) = 0.2533
+- Si e_{tj} = [0.2533,-0.0066,-0.1327] alors nous avons:
+  α_{t1} = \frac{\exp(e_{t1})}{\sum_{k=1}^{T_x} \exp(e_{tk})} ≈ \frac{1.2886}{(1.2886 + 0.9934 + 0.8758)} ≈ 0.408
+
+## VERSION ORIGINALE
+
+3. Calcul du contexte
+- En supposant le vecteur des poids d'attention α_{tj} ≈ [0.408,0.315,0.277] dont la somme est approximativement 1;
+- On peut maintenant calculer le contexte
+  c_t = \sum_{j=1}^{T_x} α_{tj}h_j ≈ 0.408 × [1,-1] + 0.315 × [0,2] + 0.277 × [-1,0.5]
+  ≈ [0.408,-0.408] + [0,0.63] + [-0.277,0.1385]
+  ≈ [0.131,0.361]
+
+## VERSION ORIGINALE
+
+- Bon ok, mais on fait quoi avec ça?
+- On peut maintenant générer des sorties ŷ_t!
+- On concatène [s_t, c_t] sur la longueur du vecteur (pas en canal), puis on ajoute une matrice de poids pour apprendre à sélectionner l'information
+- En général, on active: o_t = \tanh(W_o[s_t, c_t]) avec W_o ∈ ℝ^{d_o×[d_s+d_c]}
+- De plus, on termine généralement sur la projection du vocabulaire V ∈ ℝ^{vocab×d_o}:
+  ŷ_t = softmax(V o_t)
+- Bref, vous obtenez effectivement une probabilité par mot au temps t!!!
+
+## [Diagramme montrant l'architecture encoder-decoder avec modèle d'attention]
+
+Figure 2. Encoder-decoder architecture: (a) traditional (b) with attention model.
+
+## DÉCODAGE DE LA SORTIE
+
+- Notez que l'architecture fonctionne autant avec RNN simple que GRU et LSTM
+- On répète jusqu'à ce que le jeton de fin soit généré!!!
+
+[Image montrant l'architecture du décodeur avec LSTM, vecteurs de contexte et embeddings]
+
+## MULTIPLICATIVE ATTENTION
+
+[Image illustrant le concept "Luong Attention Overview" avec encodeur-décodeur et flux d'attention]
+
+## ALIGNEMENT DE LUONG
+
+- Dans Luong, l'état caché de l'encodeur est combiné à celui du décodeur avant de calculer l'alignement
+- Ils ont donc une matrice de poids partagée!
+- Ils utilisent trois fonctions pour l'alignement:
+
+  score(h_t, h̄_s) = {
+    h_t^⊤ h̄_s                     dot
+    h_t^⊤ W_a h̄_s                 general
+    v_a^⊤ \tanh(W_a[h_t; h̄_s])     concat
+  }
+
+- L'alignement est passé dans un Softmax comme d'habitude
+- Les symboles utilisés sont un peu différents dans cet article, mais h_t est l'état du décodeur et h̄_s de l'encodeur
+
+## BILAN DE L'ATTENTION
+
+- De façon peut-être assez étonnante, le mécanisme d'attention est meilleur que le LSTM pour les dépendances à long terme
+  - C'est parce que le vecteur de contexte prend en compte la séquence entière!
+
+- L'attention permet au décodeur de se concentrer dynamiquement sur les parties pertinentes de la séquence d'entrée pour générer chaque sortie
+
+- C'est de plus interprétable !!! Car on peut voir sur quoi le modèle se concentre à chaque pas de temps
+
+- Comme on calcul un score à chaque pas de temps, ça peut être assez lourd pour de longues séquences
+
+## D'AUTRES TYPES D'ATTENTION
+
+[Image montrant une taxonomie hiérarchique des mécanismes d'attention avec différentes catégories (Feature-Related, General, Query-Related) et leurs sous-types]
+
+## TRANSFORMEURS
+
+- Ils ont été introduits à l'origine pour permettre la parallélisation du calcul
+  - On se rappelle que ce n'était pas possible de le faire avec les RNN et les LSTM
+  - Cet aspect limitait considérablement la taille des modèles entraînables
+
+- Ils ont largement remplacé les fameux RNN grâce à la facilité de calcul
+
+- C'est une suite directe de l'attention, mais cette fois en changeant un peu le mécanisme
+
+[Tableau comparatif montrant la complexité, les opérations séquentielles et la longueur maximale du chemin pour différents types de couches]
+
+## TRANSFORMEURS
+
+- Les idées clés retrouvées dans les transformeurs sont les suivantes
+
+- Non séquentiel
+  - les phrases sont traitées dans leur ensemble plutôt que mot par mot
+  - Attention! Parfois de façon locale (bornée)
+
+- Auto-attention (self-attention)
+  - il s'agit de la nouvelle unité utilisée pour calculer les scores de similarité entre les mots d'une phrase
+
+- Embeddings positionnels
+  - Une autre innovation introduite pour remplacer la récurrence
+  - L'idée est d'utiliser des poids fixes ou appris qui codent les informations liées à une position spécifique d'un jeton dans une phrase
+
+## VERSION ORIGINALE - 2017
+
+- Exemple en code:
+  http://nlp.seas.harvard.edu/2018/04/03/attention.html
+  https://blog.floydhub.com/the-transformer-in-pytorch/
+
+- Basons-nous sur le blog suivant pour décortiquer le modèle:
+  - https://jalammar.github.io/illustrated-transformer/
+
+[Image montrant l'architecture du Transformer avec des couches d'attention multi-tête, feed-forward, et encodage positionnel]
+
+## GLOBALEMENT
+
+[Image montrant une architecture globale de Transformer avec des encodeurs et décodeurs empilés, traduisant "Je suis étudiant" en "I am a student"]
+
+## ENCODEUR
+
+1. Réseau dense standard recevant une liste de vecteurs d'attention (sous la forme matricielle)
+2. Module résiduel et normalisation de couche
+3. Self-Attention
+4. Encodage de la position des mots dans la séquence
+
+[Schéma d'un encodeur transformer avec numérotation des composants 1-5]
+
+## LIEN RÉSIDUEL
+
+- Le lien résiduel additionne directement les entrées avec les sorties combinées de la couche d'attention
+- Ensuite, on normalise
+- À titre de rappel, les modules résiduels servent surtout à aider à l'entraînement de réseaux profonds
+
+[Image illustrant le fonctionnement d'un lien résiduel dans un encodeur transformer]
+
+## SELF-ATTENTION
+
+- La couche de self-attention ressemble à l'attention de base que nous avons vue
+- Cependant, on utilise uniquement une séquence (celle en entrée)
+- Cette séquence apprend à propos d'elle-même
+- Nous devons encore calculer les requêtes (Q), les clés (K) et les valeurs (V)
+- Elles sont combinées comme précédemment avec un softmax
+
+[Image illustrant le processus de self-attention avec matrices X, W^Q, W^K, W^V et les calculs associés]
+
+## SELF-ATTENTION
+
+- Avec l'attention de Banadau, un score était donné par le MLP
+  e_{tj} = v_a^T \tanh(W_a s_{t-1} + U_a h_j)
+
+- Ici, c'est un produit scalaire entre la séquence et elle-même pour chaque position:
+  score_{ij} = \frac{q_i^T k_j}{\sqrt{d_k}} = \frac{(W^Q x_i)^T(W^K x_i)}{\sqrt{d_k}}
+
+- On divise par la dimension pour stabiliser l'échelle et donc les gradients!
+
+- E.g. si les embeddings ont une taille de 512 et qu'on projette Q, K, V en 64, alors
+  \sqrt{d_k} = 8
+
+## MULTI-HEAD ATTENTION
+
+[Image détaillée montrant le processus de multi-head attention avec les étapes: 1) phrase d'entrée 2) embedding 3) séparation en 8 têtes 4) calcul d'attention 5) concaténation]
+
+## MULTI-HEAD ATTENTION
+
+- Bref, si on a n têtes, alors pour chacune nous avons 3 matrices de poids différentes
+- Afin que celles-ci soient utiles, il faut s'assurer que l'initialisation soit bonne
+  - Xavier/Glorot si on utilise des Tanh/Sigmoid (ou similaires)
+  - Kaiming/He si on utilise des ReLU ou similaires
+
+- On peut appliquer un dropout différent par tête pour aider à différencier
+
+- Il existe aussi des techniques pour pénaliser la similarité (head diversity losses)
+
+## DÉCODEURS
+
+[Image montrant l'architecture du décodeur avec encoders, decoders, masking et connections]
+
+## TOKENISATION
+
+- Byte-Pair Encoding (BPE)
+  - Part de caractères et fusionne les paires les plus fréquentes
+  - La plupart des tokenizers modernes se basent sur cette idée!
+  - Ex : "lower", "lowest", "lowering" → "low", "er", "ing", etc.
+
+- WordPiece – BERT
+  - BPE, mais moins gourmand en mémoire dû à la fusion de tokens
+
+- Byte-level BPE
+  - BPE mais directement sur les octets UTF-8
+  - Pas de normalisation, gère tous les caractères
+  - Mais moins intuitif!
+
+## POSITIONAL ENCODING
+
+- Les transformeurs ne traitent pas les séquences de façon ordonnée comme un RNN
+- Ils reçoivent tous les tokens en parallèle, et chaque token regarde les autres via le mécanisme d'attention
+- Sans encodage de position, tous les tokens sont vus comme des vecteurs, sans aucun indice sur leur place dans la phrase
+  - E.g. « chien mange » devient la même chose que « mange chien »
+  - La perte de la notion d'ordre est critique!
+
+- Notre objectif est de continuer à prédire la sortie...
+  - ...mais il faut pour cela qu'il comprenne l'ordre
+
+## POSITIONAL ENCODING
+
+- Imaginez simplement une longue fonction sinusoïdale
+- Alors, chaque token se voit assigner une valeur
+- Par contre, elle n'est pas unique... ☹
+- Nous pouvons cependant ajouter une seconde courbe, mais avec une périodicité plus rapprochée
+- Les vecteurs deviennent déjà uniques!
+- On peut éventuellement en ajouter plus, par exemple d_{model} où en général d = 512, 1024, ...
+
+## POSITIONAL ENCODING
+
+- Dans l'article original, on fait directement la somme du vecteur de position à l'embedding de chaque mot
+- Les mots contiennent donc maintenant une information de position
+  - Le transformeur peut ainsi apprendre facilement la position relative!
+  
+  PE_{(pos,2i)} = sin(pos/10000^{2i/d_{model}})
+  PE_{(pos,2i+1)} = cos(pos/10000^{2i/d_{model}})
+
+[Image montrant l'encodage positionnel ajouté aux embeddings de mots]
+
+## LIMITE?
+
+- Si nos transformeurs sont profonds, elle peut se dissiper
+- Donc, nous aimerions potentiellement faire mieux, l'injecter à chaque couche par exemple
+  - Cependant, comme nous avons un lien résiduel nous corrigeons déjà ce problème
+
+- Rotary Positional Embeddings (RoPE) encode l'information de position dans l'espace latent (LLaMA, GPT-NeoX, GLM-130B)
+
+- RoPE fait subir une rotation aux vecteurs Q et K en fonction de leur position dans la séquence, e.g. si x = [x_1, x_2] alors RoPE:
+  RoPE_p(x) = \begin{bmatrix} \cos(\theta_p) & -\sin(\theta_p) \\ \sin(\theta_p) & \cos(\theta_p) \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix}
+
+## ROTARY POSITIONAL EMBEDDINGS (ROPE)
+
+[Image technique montrant comment RoPE transforme les vecteurs d'entrée en encodant la position par rotation]
+
+## ALIBI: TRAIN SHORT, TEST LONG
+
+- Attention with Linear Biaises (ALiBi) introduit directement la position dans l'attention
+- L'objectif est de corriger le problème des longues extrapolations:
+- Utilisé dans GPT-J et dans GPT-Neo
+
+[Image montrant des graphiques de performances d'extrapolation pour différents modèles (Sinusoidal, Rotary, T5 Bias, ALiBi) avec différentes longueurs d'entrée]
+
+## ALIBI: TRAIN SHORT, TEST LONG
+
+- Dans ALiBi nous additionnons simplement la distance relative à la query
+- Par exemple, pour q_2 nous faisons simpliment l'addition des valeurs fixes -1 et 0
+  - Oui oui, vraiment juste une addition!
+  - C'est parce que nous sommes en espace logarithmique, donc addition = multiplication après exponentielle! (softmax dans le papier)
+  - m est une simple constante qui est différente à chaque tête d'attention:
+    m = \frac{1}{2^1}, \frac{1}{2^2}, ..., \frac{1}{2^8}
+
+[Image illustrant le concept avec les connexions entre q_2 et différents tokens k]
+
+## MODÈLES DE LANGAGE
+
+Les 10 dernières années ont été révolutionnaires en termes de capacité au niveau du traitement automatique des langues
+
+Les modèles récents se basent principalement sur l'auto-attention et les modules transformeurs
+
+## [Chronologie des modèles LLM de 2017 à 2025]
+
+- À partir de l'introduction des transformeurs, les modèles de langage ont rapidement évolués
+- Cependant, ils existaient déjà depuis un moment
+- Il nous manquait la taille et la capacité d'entraîner de plus gros réseaux
+
+## ELMO - 2018
+
+- Embeddings from Language Model →ELMo
+- Modèle de langage reposant sur des Bi-LSTM profonds et ayant été entraîné sur un corpus de texte de 5.5 Milliards de mots
+- Contrairement aux modèles précédents comme Word2Vec ou GloVe, ELMo prend en compte le contexte du mot à encoder
+- Par exemple, Word2Vec retournerait le même embedding pour le mot amoureux dans les phrases suivantes:
+  - « Je suis amoureux de la nature »
+  - « Pierre est son amoureux »
+
+## ELMO - 2018
+
+- Le modèle prend les mots directement en entrée (pas un embedding)
+- ELMo utilise du dropout et de la régularisation L2
+- Le modèle à deux blocs de Bi-LSTM 4096 unités (donc 4 couches LSTM) avec une connexion résiduelle
+  - Projeté sur une représentation de taille 512
+- Un module utilisant les convolutions créer des n-gram de taille 2048 projeté aussi en 512
+- Le résultat est qu'un seul mot résulte en un embedding 3 couches de 512 chaque
+- Il y a aussi une couche « task specific » pour combiner les sorties des LSTM et donc servir aux tâches!!!!
+
+## ELMO - 2018
+
+- Le modèle sert à encoder le texte pour différente tâches
+- Par exemple, dans la traduction séquence à séquence de notre modèle transformeur de base
+  - Ce dernier prenait en entrée une suite d'embeddings!
+
+- Voici comment ELMo se comparait par rapport à la littérature:
+
+[Tableau de résultats comparatifs montrant les performances d'ELMo sur différentes tâches (SQuAD, SNLI, SRL, etc.) par rapport aux modèles précédents]
+
+## GPT – 2018
+
+- Pour Generative Pre-Training Transformer, suit un peu l'idée d'ELMo mais à plus grande échelle
+- Il se base sur un transformeur-décodeur qui ne nécessite pas la partie encodeur
+- Le modèle original est déjà assez gros, soit 12 couches du module transformeur
+- 12 modules d'attention
+
+[Image montrant l'architecture du modèle GPT avec ses composants]
+
+## GPT – 2018 – FINE TUNING
+
+[Image montrant différentes configurations pour les tâches de classification, entailment, similarity et multiple choice]
+
+## GPT – 2018
+
+- Pour entraîner GPT, on procède en plusieurs étapes
+- Le pré-entraînement non-supervisé sur le BooksCorpus de 7000 livres d'une variété de genres
+  - Taille similaire à celui d'ELMo mais avec une suite logique beaucoup plus longue
+  - Celui d'ELMo est mélangé au niveau des phrases
+  - Adam, lr=2.5e^(-4), 100 epochs et minibatch de 64, L2 modifiée
+  - Ils ont utilisé des GELU
+  - Les textes sont traités avec ftfy et spaCy
+
+- La seconde étape est le fine-tuning supervisé
+  - Entraîné de façon classique selon la tâche
+  - 4 présentées dans l'article
+
+## BERT - 2019
+
+- Bidirectional Encoder Representations from Transformers (BERT) est un modèle de représentation de texte très connu
+- Basé sur l'idée des GPT de l'époque, c'est-à-dire former un grand modèle de langage en s'appuyant sur du texte libre
+  - Puis, l'ajuster pour des tâches spécifiques
+  - Encore une fois sans réseau spécialisé
+
+- La différence majeure avec GPT est que BERT est bidirectionnel comme ELMo
+  - Il considère donc le contexte avant et après le mot!
+
+- Une version open source est disponible ici: https://github.com/google-research/bert
+
+## BERT - 2019
+
+- BERT utilise le transformeur bidirectionnel que nous avons vu
+- On utilise aussi des symboles spéciaux
+  - [SEP] – séparation de séquence (e.g. question/réponse)
+  - [CLS] – marqueur de début de séquence
+
+- Comme GPT, on préentraine puis on fine-tune pour les tâches
+- La grande version du réseau a 24 couches de transformeurs, 16 d'attention, 1024 en taille cachée (sortie) pour un total de 340millions de paramètres
+
+- Des dizaines de version, mais avec RoBERTa, Meta a montré que le mondèle original était sous-entraîné
+
+## BERT - 2019
+
+- L'entraînement est spécial, on utilise le Masked Language Model
+  - On retire 15% des mots pour mettre [MASK] 80%, un token aléatoire 10%, ou le même token 10%
+  - La cross-entropy calcule l'erreur
+
+- Et le Next Sentence Prediction
+  - Classification binaire pour deviner si la prochaine phrase est la vraie
+
+## GPT-3 - 2022
+
+- https://arxiv.org/pdf/2005.14165.pdf
+- Utilise la même architecture que GPT et GPT-2 mais il est 10x plus gros (175 Milliards de paramètres)
+- Cependant, les transformeurs alternent entre la version avec réseau dense et celle avec réseau « locally banded sparse attention »
+  - Voir ce papier: https://arxiv.org/pdf/1904.10509.pdf
+
+- Évidemment, les données d'entraînement sont aussi beaucoup plus importantes
+
+[Tableau montrant les différents datasets utilisés pour l'entraînement avec leur quantité de tokens et poids dans le mix d'entraînement]
+
+## REINFORCEMENT LEARNING FROM HUMAN FEEDBACK
+
+- Existait déjà en 2017-2018, mais adopté à grande échelle dans InstructGPT en 2022, un peu avant GPT 3.5 et 4
+- Technique utilisée pour aligner les modèles de langage avec les préférences humaines
+
+1. Préentraînement sur du texte
+2. Fine-tuning supervisé sur des exemples où l'humain montre comment répondre
+3. Introduction d'un modèle de récompense, entraîné à partir d'évaluations humaines, guide l'apprentissage via une forme de RL
+   - Généralement Proximal Policy Optimisation
+   - Modèle de RL simple, petites mises à jour
+
+## RLHF
+
+- Le texte de la police du modèle de renforcement est injecté dans le modèle de langage
+- C'est de cette façon que les probabilités sont produites pour la fonction de perte
+- Il s'agit de la Kullback-Leibler ici
+- Le modèle initial reste cependant intouché durant l'entraînement
+  - Les poids sont figés!
+
+[Image illustrant le processus RLHF avec modèle initial, modèle RL et fonction de récompense]
+
+## CLAUDE
+
+- Claude est une série de LLM entraînés par Anthropic
+- La particularité de Claude est sa capacité contextuelle massive
+  - Claude 2.1 et Claude 3 jusqu'à 200 000 tokens
+  - Vs GPT-4 Turbo 128 000 tokens
+
+- 200 000 tokens, c'est possiblement des centaines de pages!
+
+- Par contre, Gemini 1.5 est à 1 million
+  - ... et LLAMA 4 est à 10 millions
+
+- Bonne API, mais modèle propriétaire! Gros filtrage sur l'éthique/biais...
+
+## [Image de Llama 4 présentant différents modèles (Behemoth, Maverick, Scout) avec leurs caractéristiques]
+
+## BON ET LA SUITE...?
+
+- Plusieurs tendances qui sortent du cadre du deep learning:
+  - LLM comme contrôleur → retour vers les agents intelligents
+  - Comme paradigme de programmation avec des outils de plus en plus sophistiqués: LangChain, AutoGPT, OpenAgents, etc
+  - Comme moteur de recherche/OS, avec un « app store » de plus en plus complexes
+    - ....mais sous le contrôle de quelques personnes....
+
+- D'autres tendances plus précisément en Deep Learning:
+  - Amélioration continue de ce qui existe (plus de paramètre, plus de données, plus de contexte)
+  - TinyML: faire plus avec moins!
+  - Mixture-of-Experts (MoE) → activer seulement certaines zones d'un réseau
+  - Multimodalité
+
+## LE PLOMBIER ULTIME
+
+- Si vous avez atteint ce point (et avez survécu!), vous méritez maintenant le grade de plombier ultime!
+- Comme vous avez pu le voir, dans ce cours, nous n'avons qu'effleuré la surface de l'apprentissage profond
+- Mais, les papiers sortant à un rythme effréné, vous ne pourrez pas suivre l'évolution de la discipline
+- L'important est donc de comprendre l'essentiel, les forces, les faiblesses et les méthodologies liées à l'apprentissage profond
+
+Bonne chance jeune plombier!
