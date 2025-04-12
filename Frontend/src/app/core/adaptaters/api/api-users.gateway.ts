@@ -9,7 +9,7 @@ export class ApiUsersGateway extends UsersGateway {
   readonly http = inject(HttpClient);
 
   override updateUser(id: string, user: User): Observable<void> {
-    return this.http.patch<void>(`${environment.apiUrl}/account/${id}`, user);
+    return this.http.patch<void>(`${environment.apiUrl}/api/user/${id}`, user);
   }
 
 }

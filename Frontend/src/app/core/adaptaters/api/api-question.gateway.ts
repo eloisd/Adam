@@ -10,15 +10,15 @@ export class ApiQuestionGateway extends QuestionGateway {
   readonly http = inject(HttpClient);
 
   override deleteQuestion(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/questions/${id}`);
+    return this.http.delete<void>(`${environment.apiUrl}/api/questions/${id}`);
   }
 
   override getQuestionById(id: string): Observable<Question> {
-    return this.http.get<Question>(`${environment.apiUrl}/questions/${id}`);
+    return this.http.get<Question>(`${environment.apiUrl}/api/questions/${id}`);
   }
 
   override getQuestionsByTopicId(topic_id: string, paginationParams: Partial<PaginationParams<Question>>): Observable<ResultsPagination<Question>> {
-    return this.http.get<ResultsPagination<Question>>(`${environment.apiUrl}/questions`, {
+    return this.http.get<ResultsPagination<Question>>(`${environment.apiUrl}/api/questions`, {
       params: {
         topic_id: topic_id,
         ...setHttpParamsQuery(paginationParams)

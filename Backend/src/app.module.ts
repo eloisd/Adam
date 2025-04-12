@@ -4,9 +4,10 @@ import { AuthModule } from "./auth/auth.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AvatarModule } from "./avatar/avatar.module";
 import { CommonModule } from "./common/common.module";
-import { RagModule } from './rag/rag.module';
-import { ConfigModule } from '@nestjs/config';
-import { ChatbotModule } from './chatbot/chatbot.module';
+import { RagModule } from "./chatbot/rag/rag.module";
+import { ConfigModule } from "@nestjs/config";
+import { ChatbotModule } from "./chatbot/chatbot.module";
+import { RouterModule } from "@nestjs/core";
 
 @Module({
   imports: [
@@ -30,6 +31,12 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     CommonModule,
     RagModule,
     ChatbotModule,
+    RouterModule.register([
+      {
+        path: "api",
+        module: ApiModule,
+      },
+    ]),
   ],
 })
 export class AppModule {}

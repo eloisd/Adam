@@ -10,21 +10,21 @@ export class ApiTopicsGateway extends TopicsGateway {
   readonly http = inject(HttpClient);
 
   override createTopic(topic: Topic): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/topics`, topic);
+    return this.http.post<void>(`${environment.apiUrl}/api/topics`, topic);
   }
 
   deleteTopic(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/topics/${id}`);
+    return this.http.delete<void>(`${environment.apiUrl}/api/topics/${id}`);
   }
 
   getTopics(query: Partial<PaginationParams<Topic>>): Observable<ResultsPagination<Topic>> {
-    return this.http.get<ResultsPagination<Topic>>(`${environment.apiUrl}/topics`, {
+    return this.http.get<ResultsPagination<Topic>>(`${environment.apiUrl}/api/topics`, {
       params: setHttpParamsQuery(query)
     });
   }
 
   updateTopic(id: string, topic: Partial<Topic>): Observable<void> {
-    return this.http.patch<void>(`${environment.apiUrl}/topics/${topic.id}`, topic);
+    return this.http.patch<void>(`${environment.apiUrl}/api/topics/${topic.id}`, topic);
   }
 
 }

@@ -3,7 +3,7 @@ import { FilesService } from "src/api/file/files.service";
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { ConfigService } from '@nestjs/config';
-import { FileEntity } from '../entities/file.entity';
+import { FileEntity } from '../../entities/file.entity';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
