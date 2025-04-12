@@ -15,10 +15,15 @@ export function markedOptionsFactory(): MarkedOptions {
   renderer.code = ({ text, lang }): string => {
     const langText = lang ? lang : 'plaintext';
     const langClass = lang ? `language-${lang === 'html' ? 'xml' : lang}` : 'language-plaintext';
-    return `<pre class="${langClass}"><div class="header hljs">${langText}</div><app-chat-bubble></app-chat-bubble><code class="${langClass}">${escapeHtml(text)}</code></pre>`;
+    return `<pre class="${langClass}"><div class="header hljs">${langText}</div><code class="${langClass}">${escapeHtml(text)}</code></pre>`;
   };
 
-  return { renderer };
+  return {
+    renderer,
+    gfm: true,
+    breaks: false,
+    pedantic: false,
+  };
 }
 
 function escapeHtml(text: string): string {

@@ -1,11 +1,15 @@
 import {Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {MarkdownComponent} from 'ngx-markdown';
+import {KatexOptions, MarkdownComponent} from 'ngx-markdown';
 import {HighlightService} from './highlight.service';
 
 @Component({
   selector: 'app-markdown-display',
   template: `
-    <markdown [data]="markdownContent" (ready)="onReady()"></markdown>
+    <markdown
+      [katex]="true"
+      [data]="markdownContent"
+      (ready)="onReady()"
+    ></markdown>
   `,
   imports: [
     MarkdownComponent
