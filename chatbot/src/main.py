@@ -11,9 +11,9 @@ from typing import Dict, Any, List
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 
-from .tools_manager import ToolsManager
-from .graph import ChatbotGraph
-from .tools.rag import RAG
+from tools_manager import ToolsManager
+from graph import ChatbotGraph
+from main_agent.rag import RAG
 
 def initialize_tools(
     data_dir: str = "data_txt",
@@ -134,7 +134,7 @@ def main():
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Adam Chatbot")
-    parser.add_argument("--data_dir", type=str, default="data_txt", help="Directory containing text data")
+    parser.add_argument("--data_dir", type=str, default="../data_txt", help="Directory containing text data")
     parser.add_argument("--rag_model", type=str, default="gpt-4o-mini", help="Model for RAG")
     parser.add_argument("--agent_model", type=str, default="gpt-4o-mini", help="Model for the agent/router")
     parser.add_argument("--embedding_model", type=str, default="text-embedding-3-small", help="Model for embeddings")
