@@ -1,0 +1,762 @@
+# RÉSEAU DE NEURONES À CONVOLUTIONS
+
+## Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca            Kevin_Bouchard@uqac.ca
+
+## CONTENU DE LA LEÇON #4
+
+### Vous apprendrez:
+- L'intérêt d'inventer des opérations particulières dans les réseaux de neurones
+- Comment on entraîne un réseau profond sans boucle
+- L'implémentation concrète et celles assistée par les librairies TF et PyTorch
+
+### Contenu spécifique:
+- Origine des réseaux convolutifs
+- Opération de convolution
+- Éléments avec un rôle spécifique
+- Fonctions d'activation
+- Inversion des couches
+
+## IMAGENET ET LE RETOUR DES NN
+
+*Le graphique montre l'évolution des architectures de réseaux de neurones pour le Large Scale Visual Recognition Challenge (ILSVRC), indiquant une progression du taux d'erreur de classification qui a diminué au fil des années, de 28.2% en 2010 à 3.57% en 2015 avec ResNet. On observe également que le nombre de couches des réseaux a augmenté significativement, passant de modèles "shallow" à des architectures profondes comme ResNet avec 152 couches.*
+
+*Référence: Kaiming He, Xiangyu Zhang, Shaoqing Ren, & Jian Sun. "Deep Residual Learning for Image Recognition". CVPR 2016.
+
+## IMAGENET
+
+- ImageNet contient aujourd'hui 14 millions d'images annotées couvrant plus de 20000 catégories
+  - Le plus couramment utilisé est le concours ILSVRC 2012 avec 1.3 millions d'images en 1000 classes
+  - Mais il y a eu d'autres concours tels que la détection d'objets, les voitures, le mutiétiquette, etc.
+
+*L'image montre une grille d'images diverses à gauche et une image avec détection d'objets à droite, où plusieurs objets sont identifiés et encadrés avec des étiquettes comme "person", "dog", "chair".*
+
+## DE IMAGENET VERS LES SUIVANTS
+
+*L'image présente différentes bases de données qui ont suivi ImageNet dans différents domaines:*
+
+- SpaceNet (DigitalGlobe, CosmiQ Works, NVIDIA)
+- MusicNet (J. Thickstun et al, 2017)
+- Medical ImageNet (Stanford Radiology, 2017)
+- ShapeNet (A.Chang et al, 2015)
+- EventNet (G. Ye et al, 2015)
+- ActivityNet (F. Heilbron et al, 2015)
+
+## RÉSEAU DE NEURONES À CONVOLUTIONS
+
+- Convolutional Neural Network (CNN)
+- Un type particulier de réseau de neurones qui utilise les convolutions comme opérations plutôt que des opérations de multiplications matricielles
+  - Pas nécessairement à chaque niveau!
+  - Très utile pour les données qui ont une topologie sous forme de grille (sons, images, séries temporelles)
+
+- Nous commencerons par une brève introduction sur l'opération de convolution
+
+## ARCHITECTURE
+
+- Un CNN est en fait une architecture de réseau profond basé sur quelques types de blocs cruciaux
+- Cet assemblage peut être compliqué
+- Malgré tout, individuellement, chaque bloc est relativement simple
+
+*L'image illustre l'architecture d'un CNN simple avec différentes couches: entrée (32x32), convolution 5x5, subsampling 2x2, convolution, subsampling et couche entièrement connectée pour la classification.*
+
+## PRODUIT SCALAIRE DE MATRICES
+
+C = AB
+
+C_{i,j} = ∑_k A_{i,k}B_{k,j}
+
+*L'image montre une représentation visuelle du produit matriciel avec des matrices de dimensions m×p et n×p produisant une matrice m×p, avec indication que les dimensions internes (n) doivent être identiques.*
+
+## OPÉRATIONS DE BASE DU CNN
+
+- Convolution
+  - Similaire à une multiplication de matrices
+  - Prend une entrée, produit une sortie (couche cachée)
+
+- Deconvolution
+  - Similaire à une multiplication par la transposée d'une matrice
+  - Utilisée pour la propagation arrière de l'erreur des sorties vers les entrées
+
+- Calcul des gradients de poids
+  - Pour la propagation arrière de l'erreur des sorties vers les poids
+  - Prend en compte le partage de paramètres
+
+## CONVOLUTION
+
+- Dans le cadre des CNN, les éléments d'une convolution sont souvent appelés
+  - L'entrée (input), la fonction sur laquelle on applique le filtre
+  - Le noyau (kernel) et le filtre de convolution
+  - La sortie est parfois appelée « feature map »
+
+- Tensors(tenseurs): Ces éléments servant à la convolution sont des tableaux multidimensionnels en ML que l'on nomme tenseurs
+  - torch.tensor(list ou np.array, dtype=torch.int32) - il existe de nombreux types!
+
+*L'image montre un exemple de code PyTorch pour la création de tenseurs avec torch.zeros et torch.ones*
+
+## CONVOLUTION
+
+*L'image montre une illustration d'une opération de convolution où un kernel 3×3 est appliqué à une image 5×5 pour produire une feature map. L'exemple calcule la valeur 4 comme résultat de la somme pondérée.*
+
+- La convolution dans PyTorch:
+  https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html
+
+- Et dans TensorFlow:
+  https://www.tensorflow.org/api_docs/python/tf/keras/layers/Conv2D
+
+- Attention! Pour une Conv2D, l'ordre est différent entre PyTorch et TF
+
+```python
+conv = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=2, padding=1)
+output = conv(input_tensor)
+
+conv = Conv2D(filters=16, kernel_size=(3, 3), strides=(2, 2), padding='same')
+output = conv(input_tensor)
+```
+
+## CONVOLUTION
+
+- Même si mathématiquement leurs définitions diffèrent, en pratique en ML, nous appelons convolution/cross-correlation → convolution
+
+*L'image montre une représentation de grilles 3×3 avec des indices montrant la différence entre convolution (lecture de droite à gauche) et cross-correlation (lecture de gauche à droite)*
+
+- Dans le cadre du ML, les noyaux sont ce que nous souhaitons apprendre
+  - Les convolutions sont généralement très petites (beaucoup plus petites que nos entrées)
+  - Elles fonctionnent conjointement avec d'autres opérations
+
+## EXEMPLE
+
+- Une opération de « flou »
+
+H = 1/25 [1 1 1 1 1
+          1 1 1 1 1
+          1 1 1 1 1
+          1 1 1 1 1
+          1 1 1 1 1]
+
+*L'image montre une photographie originale nette à gauche et la même image floutée à droite après application du filtre de convolution H.*
+
+## CONVOLUTION
+
+*L'image illustre une opération de convolution détaillée avec une matrice d'entrée 4×4 (avec des lettres a,b,c,d,e,f,g,h,i,j,k,l), un kernel 2×2 (avec w,x,y,z) et le calcul des valeurs de sortie.*
+
+Autre exemple de convolution
+
+Problèmes?
+
+Tenseur 2D en entrée → Tenseur 2D en sortie?
+
+## CONVOLUTION
+
+*L'image montre une visualisation de l'opération de convolution avec un filtre de Sobel appliqué à une image, montrant le calcul détaillé d'un pixel de sortie.*
+
+- En général on utilise des noyaux impairs
+  - En ML, moins dommageable
+  - On peut même sauter certains pixels avec le « Stride »
+
+- L'avantage des convolutions vs les multiplications matricielles des réseaux multicouches standards: connectivité locale!
+  - E.g.: Image 32x32x3couleurs=3072. Un seul neurone caché aura 3072 poids à apprendre.
+
+- Les convolutions peuvent en plus travailler avec des entrées de tailles variables!
+  - Pour tirer avantage, noyaux plus petits que l'entrée!
+
+## CONNECTIVITÉ (ILLUSTRÉE)
+
+*L'image montre deux diagrammes comparant la connectivité dans des réseaux neuronaux:*
+1. En haut: connectivité locale/éparse où chaque neurone de sortie se connecte seulement à quelques neurones d'entrée
+2. En bas: connectivité dense/complète où chaque neurone de sortie est connecté à tous les neurones d'entrée
+
+## PORTÉE DES POIDS
+
+- Dans une multiplication de matrice traditionnelle, chaque poids de la matrice W est utilisé une seule fois
+
+- Dans un CNN, les poids d'un noyau sont utilisés sur toutes les entrées
+  - Plutôt que d'apprendre des poids différents pour chaque entrée, nous n'apprenons qu'un seul ensemble
+
+*L'image illustre cette différence de connectivité avec deux diagrammes montrant des connexions entre couches d'entrée et de sortie.*
+
+## GAIN EN EFFICACITÉ
+
+- Au niveau du temps:
+  - Multiplication matricielle O(mn) (m entrées x n sorties) par exemple
+  - CNN → O(kn) avec k<m représentant les connections des nœuds de sorties
+
+- Au niveau de la mémoire:
+  - Le réseau feedforward standard demande de conserver mn paramètres en mémoire
+  - Le CNN, grâce au partage de poids, n'a besoin de conserver que k paramètres
+  - k est en général beaucoup plus petit que m ou n
+
+## E.G.: DÉTECTION DE BORDS
+
+*L'image montre un exemple de détection de bords où une image d'un chien (entrée) est traitée avec un filtre/kernel [1 -1] pour produire une image en sortie où seuls les contours sont visibles.*
+
+## E.G.: DÉTECTION DE BORDS
+
+- L'image d'entrée: 320 pixels par 280 = 89 600 dimensions
+- Noyau: 2 x 1
+- Sortie: 319 pixels (on perd un bord) par 280= 89 320
+
+| | Convolution | Matrice dense | Matrice creuse (+++ zéros) |
+|-------------|-------------|-----------------|------------------------|
+| Mémoire | 2 | 319*280*320*280 ≈8 milliards | 2*319*280 =178 640 |
+| Multiplications/ Additions | 319*280*3 =267 960 | ≈16 milliards | (égal à conv) 267 960 |
+
+- La multiplication de matrice directe nécessite 8M de paramètres en mémoire et plus de 16M d'opérations
+- En considérant les 0, on se rapproche de l'efficacité de la conv, mais on doit toujours garder 178 640 paramètres
+
+*Conv: a*1+b*-1 ⟵3 opérations
+
+## PADDING ET STRIDE
+
+*L'image illustre différentes configurations de padding et stride dans les opérations de convolution:*
+
+- Pas de padding, Pas de stride
+- Avec Stride, Pas de padding
+- Stride et padding
+- *Une quatrième configuration est également illustrée*
+
+*images: https://github.com/vdumoulin/conv_arithmetic
+
+## TYPES DE DONNÉES
+
+| | Canal unique | Multiple cannaux |
+|-----------|--------------------------|----------------------------------|
+| 1-D | Signal audio: Amplitude du signal par temps (discret). Convolution sur le temps. | Données d'animation: Animations d'un personnage via différentes positions d'un « squelette » dans le temps. À chaque moment, le personnage est décrit par les angles de chaque joint. |
+| 2-D | Audio Fourier: Transformation en données 2-D avec FFT. Colonnes: Fréquences. Lignes: points dans le temps. | Image en couleurs: Un canal par couleur. Matrice d'intensités correspondant à chaque pixel dans l'image. |
+| 3D | Données volumétriques: Imagerie médicale, par exemple tomodensitométrie (CT scan) | Vidéo en couleurs: Même que l'image, mais un axe de plus pour le temps. |
+
+## COUCHES SPÉCIFIQUES
+
+*La diapositive montre uniquement un titre "COUCHES SPÉCIFIQUES" avec un numéro 23 dans un cercle rouge.*
+
+## POOLING
+
+- Une autre brique de base des CNN
+- En général, une couche de convolution implique l'application de nombreuses convolutions en parallèle
+- Ensuite, on passe dans une couche d'activation non-linéaire similairement aux modèles précédents (ReLU)
+- La couche suivante, de pooling, modifie la sortie
+- Cette couche remplace les sorties à l'aide de statistiques sommaires
+
+## POOLING
+
+- Le pooling sert à rendre la représentation peu variable à de petits changements dans la couche d'entrées
+  - E.g.: une petite translation de la même image ne devrait pas affecter les sorties de la couche de pooling
+
+  - Par exemple, Max Pooling permet de prendre la valeur maximale dans un rectangle de voisinage
+  
+  - Ici, un exemple simplifié avec un pixel de décalage
+
+*L'image montre deux exemples de pooling avec des valeurs numériques, montrant comment le max pooling préserve les valeurs maximales malgré un décalage des entrées.*
+
+## POOLING
+
+- Le pooling permet d'améliorer nettement la qualité de l'apprentissage
+- Le pooling sur une région spatial réduire les variations face aux translations
+- On peut aussi utiliser le pooling directement sur les sorties des convolutions:
+
+*L'image montre trois filtres appris pour détecter différentes rotations du chiffre "5", puis un max pooling qui capture la réponse maximale, rendant la détection invariante à la rotation.*
+
+## POOLING
+
+- Il peut y avoir moins d'unités de pooling que d'unités de convolution
+- Le sommaire peut être calculé pour des régions à k pixels d'intervalle
+  - La couche suivante à donc (à peu près) k fois moins d'entrées à gérer!
+  - On appelle cette technique « pooling with downsampling »
+
+*L'image montre un exemple de downsampling à travers un schéma qui illustre comment le pooling peut réduire la dimension spatiale des features.*
+
+Le downsampling peut être directement fait par les convolutions!!!
+
+## POOLING
+
+*L'image montre une architecture typique de CNN avec plusieurs couches de convolution, pooling et couches pleinement connectées, illustrant le flux de données des images d'entrée jusqu'aux probabilités de classe.*
+
+- Le pooling est intéressant pour bien gérer les entrées de tailles différentes
+- Par exemple, si nos images en entrées diffèrent, le pooling pourrait permettre que la couche de classification reçoive toujours le même nombre d'entrées
+
+⟵Exemples d'architectures complètes de CNN
+
+## KERAS
+
+- Keras offre le MaxPooling, l'AveragePooling
+
+*L'image montre un exemple de code TensorFlow/Keras pour créer et utiliser une couche de MaxPooling1D.*
+
+- Mais aussi les global max et average
+  - Ceux-ci s'appliquent sur l'entrée entière
+  - GlobalMaxPooling1D dans l'exemple donnerait 5
+
+## PYTORCH
+
+- PyTorch offre aussi plusieurs options à ce niveau dont le MaxPooling et l'AvgPooling
+
+```python
+input_tensor = torch.tensor([[[1, 2, 3, 0], [4, 5, 6, 1], [7, 8, 9, 2], [0, 1, 2, 3]]], dtype=torch.float32)
+max_pool = nn.MaxPool2d(kernel_size=2, stride=2).max_pool(input_tensor)
+avg_pool = nn.AvgPool2d(kernel_size=2, stride=2).avg_pool(input_tensor)
+```
+
+*L'image montre le résultat de ces opérations avec les matrices correspondantes:*
+
+InputTensor = [
+[1 2 3 0]
+[4 5 6 1]
+[7 8 9 2]
+[0 1 2 3]
+]
+
+MaxPool = [
+[5 6]
+[8 9]
+]
+
+AvgPool = [
+[3 2.5]
+[4 4]
+]
+
+## DROPOUT
+
+- On peut parfois ignorer certains neurones artificiels
+  - On les choisit au hasard!
+  - pour chaque couche cachée, à chaque instance, ignorer p unités (activations)
+
+- Pourquoi veut-on faire ça?
+  - Prévenir le surapprentissage (overfitting)
+  - Dans les couches denses, les neurones sont complètements connectés et développent une co-dépendance!
+
+*L'image montre une comparaison entre un réseau neuronal standard et le même réseau après application du dropout, où certaines connexions sont désactivées aléatoirement.*
+
+*image: Srivastava, Nitish, et al. "Dropout: a simple way to prevent neural networks from overfitting", JMLR 2014
+
+## DROPOUT
+
+- C'est en fait une application du Bagging à un DNN
+  - On désactive généralement 20-50% des unités cachées de façon aléatoire
+  - Et parfois 20% des entrées pour chaque mini-batch
+
+- La différence majeure avec le bagging est que les modèles ne sont pas indépendants les uns des autres
+
+*L'image montre un exemple de code TensorFlow/Keras implémentant le dropout, avec l'entrée et la sortie correspondante.*
+
+## EXEMPLE MNIST AVEC CNN
+
+- Voir:
+  https://colab.research.google.com/github/keras-team/keras-io/blob/master/examples/vision/ipynb/mnist_convnet.ipynb#scrollTo=nNhapcvZb4u
+
+- Nombre de conv
+- Taille (3x3, 5x5, 7x7)
+- Valid=sans, Same=avec
+- True/False->Pas de biais !!!!
+
+*L'image montre un extrait de code Keras pour la configuration d'une couche Conv2D avec différents paramètres.*
+
+## PROPRIÉTÉS DIVERSES
+
+*La diapositive montre uniquement un titre "PROPRIÉTÉS DIVERSES" avec un numéro 36 dans un cercle rouge.*
+
+## ENTRAÎNEMENT
+
+- L'entraînement peut se faire de différentes façons, mais encore une fois, il faut une fonction de coûts dérivable
+- On utilise l'algorithme de backpropagation
+
+- Aujourd'hui, très souvent vous n'aurez pas à entraîner votre CNN!
+  - Vous pouvez en prendre un déjà entraîné
+  - Il suffit alors d'ajuster les paramètres
+  - Voir tutorial TensorFlow: https://www.tensorflow.org/guide/keras/transfer_learning
+  - Ou en PyTorch: https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+
+## ENTRAÎNEMENT AVEC KERAS
+
+- Dans Keras, il y a beaucoup d'éléments à configurer pour l'entraînement
+- Il est utile de bien lire la page Keras à cet effet:
+  - https://keras.io/api/models/model_training_apis/
+
+- Dans la liste, il y a la fonction de perte
+  - https://keras.io/api/losses/
+  - La categorial cross entropy est à peu près l'équivalent du négatif de la log-likelihood que nous avons utilisé jusqu'à présent
+  - Nous n'insisterons pas plus sur les fonctions de perte
+
+- Attention, il faut bien initialiser nos noyaux pour que l'entraînement se passe bien!
+
+## TF.KERAS.INITIALIZERS
+
+- Dans Keras, voici nos options:
+  - RandomNormal(mean=0.0, stddev=0.05, seed=None)
+  - RandomUniform(minval=-0.05, maxval=0.05, seed=None)
+  - TruncatedNormal(mean=0.0, stddev=0.05, seed=None) ← RN sans les valeurs extrêmes
+  - Zeros() ou Ones()
+  - GlorotNormal/Uniform(seed=None) ← Par défaut dans nos CNN
+    - Normal centrée, et Uniform entre des limites spécifiques
+    - Basé sur les entrées et sorties des unités
+  - HeNormal/Uniform(seed=None)
+    - Comme Glorot, mais seulement basé sur les sorties
+
+- Etc. Voir: https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+
+## ENTRAÎNEMENT AVEC PYTORCH
+
+- La façon de procéder avec PyTorch est assez différente, mais il faut tout de même configurer à peu près les mêmes éléments
+
+- Définir l'architecture du CNN: tutoriel Colab
+
+- Il faut ensuite choisir une fonction de perte:
+  https://pytorch.org/docs/stable/nn.html#loss-functions
+
+## COMMENT FAIRE LA DÉCONVOLUTION?
+
+- En rétropropagation Keras et Pytorch utilise la convolution transposée pour inverser l'opération
+  - L'opération n'est pas parfaite, on ne retrouve pas les données d'origine!
+  - UpSampling2D coûte moins cher en temps (c'est un Nearest Neighbor)
+
+- Considérons une entrée: [0 1; 2 3] et une taille de sortie 
+
+- Supposons un noyau [0 1; 2 3] sans stride ni padding
+
+*L'image montre comment la déconvolution/convolution transposée est calculée étape par étape, avec l'expression mathématique correspondante.*
+
+*http://cs231n.stanford.edu/slides/2017/cs231n_2017_lecture11.pdf
+
+## CONVOLUTION TRANSPOSÉE
+
+- On peut apprendre les noyaux de convolution transposée!
+  - Dans ce cas, en rétropropagation, on fait une convolution!!!
+
+*L'image montre un exemple de convolution transposée 3x3 avec stride de 2 et sans padding, illustrant comment une entrée 2x2 est transformée en sortie 4x4, avec l'explication "Somme lors de chevauchements".*
+
+## CONVOLUTION TRANSPOSÉE
+
+- Les convolutions transposées ont certains défauts
+  - Chevauchement inégal lorsque la taille du noyau n'est pas divisible par le stride (ici S:2 et N:3)
+  - Pire en 3D et peut parfois s'empirer au fil des couches successives
+
+*L'image montre deux exemples visuels: une grille représentant le problème de chevauchement, et une image déformée d'un animal avec un effet d'échiquier, illustrant les artefacts que peut produire la convolution transposée.*
+
+*https://distill.pub/2016/deconv-checkerboard/
+
+## AUGMENTATION DE RÉSOLUTION
+
+- Park et al. 2018 utilisent les convolutions transposées pour augmenter la résolution d'images (nous verrons brièvement avec les GAN)
+
+*L'image montre des comparaisons d'images avant/après super-résolution, avec 4 exemples différents (un chien, des macarons, un rapace et une figurine) où la version basse résolution est transformée en version haute résolution.*
+
+Seong-Jin Park, Hyeongseok Son, Sunghyun Cho, Ki-Sang Hong, Seungyong Lee. The European Conference on Computer Vision (ECCV), 2018, pp. 439-455
+
+## UPSAMPLING?
+
+- Tel que mentionné, le suréchantillonnage est plus rapide
+
+- Les techniques populaires
+
+*L'image montre différentes techniques d'upsampling:*
+- Nearest Neighbor (duplication des pixels)
+- Bi-Linear Interpolation (moyenne pondérée)
+- "Bed of Nails" (insertion de zéros)
+
+P2=0.2*20+0.8*10=12
+Les poids sont différents d'une implémentation à l'autre!!!!!
+*https://theiailearner.com/2018/12/29/image-processing-bilinear-interpolation/
+
+## UPSAMPLING?
+
+- Pourquoi dans ce cas les librairies utilisent la ConvTransposée dans la rétropropagation?
+  - En fait, bien qu'imparfaite, la transposée redistribue les gradients spatialement en imitant approximativement la propagation avant
+  - On préserve l'alignement champs réceptifs des filtres de convolution ce qui est essentiel pour l'apprentissage!
+
+- L'up-sampling simple (bilinéaire ou par voisinage) ne préserve pas ce flux de gradient car :
+  1. Il ne prend pas en compte la structure des poids convolutifs
+  2. Il n'intègre pas les effets du stride et du padding
+  3. Il ne distribue pas correctement les gradients aux poids des filtres.
+
+## MAX-UNPOOLING
+
+*L'image illustre le processus de max pooling et max unpooling:*
+1. Pour le max pooling: on prend la valeur maximale de chaque région 2x2 dans une entrée 4x4, produisant une sortie 2x2
+2. Pour le max unpooling: on utilise les positions mémorisées des maximums pour reconstruire une matrice 4x4 éparse
+
+*La partie inférieure de l'image montre comment le max pooling et l'unpooling correspondent à des couches de downsampling et upsampling dans une architecture de réseau.*
+
+* http://cs231n.stanford.edu/slides/2017/cs231n_2017_lecture11.pdf
+
+## FONCTIONS D'ACTIVATION
+
+Bon, dans nos exemples, nous avons vu plusieurs mots au-delà de la fonction d'activation sigmoid de base... mais pourquoi?
+
+## FONCTIONS D'ACTIVATION
+
+*L'image montre une grille de différentes fonctions d'activation organisées en 4x4:*
+- Identité, Sigmoid, TanH, ArcTan
+- ReLU, Leaky ReLU, Randomized ReLU, Parametric ReLU
+- Binary, Exponential Linear Unit, Soft Sign, Inverse Square Root Unit (ISRU)
+- Inverse Square Root Linear, Square Non-Linearity, Bipolar ReLU, Soft Plus
+
+## FONCTIONS D'ACTIVATION
+
+- Dans les réseaux de neurones, il existe plusieurs types de fonctions d'activation
+- Elles sont divisées en deux familles:
+  - Linéaires
+  - Non-linéaires
+
+- La seconde famille nous intéresse un peu plus car elles modèlent mieux les différentes variétés de données
+- Elles sont soit monotones ou non-monotones
+
+*L'image montre deux courbes: une fonction monotone croissante à gauche et une fonction non-monotone à droite.*
+
+## MONOTONIE
+
+- Nous avons vu l'intérêt d'avoir des fonctions différentiables, mais pourquoi désirer des fonctions monotones?
+
+- En fait, si vous vous souvenez bien, quand on fait la rétropropagation, nous mettons à jour nos poids pour affecter le résultat de l'activation (positivement ou négativement)
+
+- Si notre fonction n'est pas monotone, en augmentant le poids, nous pourrions parfois provoquer une baisse de l'activation!
+
+- Ce n'est pas obligatoire, car dans la plupart des cas, le réseau convergerait quand même
+
+- Il existe d'ailleurs des fonctions d'activation moins connues qui sont non monotones:
+  - PFLU, FPFLU, Swish (notions avancées)
+
+## FONCTION HEAVISIDE
+
+- La fonction heaviside aussi appelée step-activation est
+- Sa dérivée est toujours 0
+- Conséquemment, elle n'est pas différentiable
+- Et inutilisable avec la backpropagation
+
+*L'image montre le graphique de la fonction heaviside (fonction échelon unitaire) qui vaut 0 pour x<0 et 1 pour x≥0.*
+
+## SIGMOID ET HYPERBOLIC TANGENT (TANH)
+
+- Sigmoid et Tanh sont particulièrement adaptées pour prédire une probabilité comme sortie
+- On peut les dériver (trouver la pente)
+- Les deux sont monotones, mais pas leurs dérivées
+  - Permet de garantir que l'erreur soit convexe pour un niveau (ce qui est désirable)
+- Tanh a l'avantage de donner des scores très négatifs pour les entrées négatives
+
+```python
+model.add(layers.Dense(64, activation=activations.sigmoid))
+model.add(layers.Dense(64, activation=activations.tanh))
+```
+
+## SIGMOID ET HYPERBOLIC TANGENT (TANH)
+
+- Sigmoid→ f(x) = 1/(1+e^(-x))
+- Sa dérivée → f'(x) = 1/(1+e^(-x))(1-1/(1+e^(-x)))
+
+- Tanh→ f(x) = (e^x-e^(-x))/(e^x+e^(-x))
+- Sa dérivée → f'(x) = 1-((e^x-e^(-x))/(e^x+e^(-x)))^2
+
+*L'image montre les graphiques comparant Sigmoid et Tanh ainsi que leurs dérivées respectives.*
+
+## SIGMOID ET HYPERBOLIC TANGENT (TANH)
+
+- Les deux souffrent du vanishing gradient (voir dérivées)
+- Rappel δ^(2) = (W^(2))^T (δ^(3) * ∂ϕ(z^(2))/∂z^(2)) et ainsi de suite pour la backpropagation
+- Si z^(2) est grand, alors la dérivée partielle tend vers 0
+- Donc (W^(2))^T (δ^(3) * à peu près 0) →0!!!
+
+## RECTIFIED LINEAR UNIT (RELU)
+
+- Dans certains cas, Sigmoid, Tanh peuvent occasionner des problèmes (apprentissage bloqué)
+- C'est une fonction monotone et sa dérivée aussi!
+- Moins de problèmes de gradients qui disparaissent dans les réseaux avec beaucoup de couches
+- Les opérations sont plus simples (pas d'exponentielle, moins de calculs)
+- Beaucoup de valeurs d'unités ReLU sont à zéro, ce qui peut accélérer la convergence
+
+## RECTIFIED LINEAR UNIT (RELU)
+
+- Toutes les valeurs négatives deviennent zéro
+- Parfois ce n'est pas souhaitable, cela peut arrêter l'entraînement au niveau des entrées négatives
+- On peut rectifier avec un Leaky ReLU ou encore une version plus générique Parametric ReLU
+
+*L'image montre trois graphiques comparant:*
+1. ReLU standard
+2. Leaky ReLU/PReLU
+3. Randomized Leaky ReLU
+
+## RELU VS LEAKY RELU
+
+- Portez surtout attention à la dérivée!
+
+*L'image montre probablement des graphiques comparant les dérivées de ReLU et Leaky ReLU, illustrant comment Leaky ReLU a une petite pente pour les valeurs négatives alors que ReLU a une dérivée nulle pour ces valeurs.*
+
+tf.keras.activations.relu(x, alpha=0.0, max_value=None, threshold=0.0)
+
+## RELU ET MATRICES CREUSES
+
+- Les activations tombant souvent à zéro, on dit que ReLU occasion des matrices d'activation creuse (beaucoup de zéros)
+  - Gain en vitesse pour le réseau, puisque les calculs sont faciles
+  - Mais aussi un gain en espace!!!
+  - On enregistre les éléments plutôt que des tableaux 2D (ligne, colonne, valeur)
+
+- Dead ReLUs problem peut devenir non négligeable dans les grands NN (la plupart ne sont plus mis à jour)
+
+- Les ReLU ne corrigent pas l'inverse du vanishing gradient
+
+- Ainsi, ils souffrent du exploding gradient
+  - Moins critique!
+
+## AUTRES CHOIX DANS PYTORCH?
+
+- Il existe de nos jours une très grande quantité de fonctions d'activation
+  - https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+
+- Quelques intuitions sur les améliorations proposées:
+  - Les versions Hard visent à réduire le coût de calcul par des approximations linéaires en évitant les exponentielles, leur gradient est plus stable
+  - SELU vise l'autonormalisation des réseaux, ce qui réduit le besoin de BatchNorm (réseaux plus complexes à mettre en œuvre)
+  - GELU est coûteuse mais plus douce que ReLU, fonctionne bien dans les modèles à base d'attention
+  - SWISH & MISH sont non-monotones et captures des représentations plus riches et complexes tout en évitant les « dead ReLU »
+
+## SOFTMAX
+
+- Softmax est un type particulier de fonction
+- Elle se base sur les principes de la fonction d'activation logistique
+  - On produit un résultat qui est une probabilité d'appartenance à une classe entre 0 et 1
+
+- Softmax étend cette idée aux problèmes multiclasses
+  - La somme des probabilités devient égale à 1
+  - Chaque classe vaut entre 0 et 1
+
+- Ne fonctionne pas si vos instances peuvent appartenir à la fois à plusieurs classes
+  - On doit retourner vers Sigmoïde (la fonction logistique)
+
+P(Y = j|X = x^(i)) = e^s_j/∑_k e^s_k, où s = f(x^(i), W)
+
+## SOFTMAX
+
+*L'image montre un exemple d'application de softmax avec une photo de chats et les calculs correspondants:*
+
+Chat    5.1      L_i = -log P(e^s_yi/∑_k e^s_k)
+Chien   3.2      ← Proviennent d'une couche linéaire sans activation
+Lapin  -1.7
+
+Probabilités log  
+Non normalisée    Avec activation Sigmoïde, nous aurions entraîné le réseau en minimisant la NLL
+
+## SOFTMAX
+
+[Même exemple avec calcul des probabilités]:
+
+Chat    5.1      →  164      →  0.87
+Chien   3.2      →  24,5     →  0.13
+Lapin  -1.7      →  0,18     →  0.00
+
+Probabilités log  Probabilités   Probabilités
+Non normalisée   Non normalisée  Softmax
+
+## SOFTMAX
+
+[Même exemple avec explication de l'optimisation]:
+
+Chat    5.1      →  164      →  0.87     Pour l'optimisation,
+Chien   3.2      →  24,5     →  0.13     le log négatif:
+Lapin  -1.7      →  0,18     →  0.00     -log(0.87) = 0.0604..
+
+Probabilités log  Probabilités   Probabilités   C'est notre perte
+Non normalisée   Non normalisée  Softmax       pour l'entropie
+                                              croisée binaire!
+
+## ARCHITECTURES MAJEURES
+
+Quelques exemples très connus d'architectures de CNN simple.
+
+## LENET
+
+Convolution: partage spatial de poids
+Downsampling
+Sorties entièrement connectées
+Backpropagation
+
+[Le document montre un schéma de LeNet et ses paramètres]:
+- 6 conv (3x3) + bias = 54+6 paramètres
+- 6 channels in, 16 channels out, 6*16*(3x3)=864 plus 16 biais = 880 paramètres
+
+Voir: https://colab.research.google.com/drive/1CVm50PGE4vytB5I_a_ycl5F-iiKOVL9
+
+## ALEXNET
+
+- 8 couches
+  - 5 convolutionnelles
+  - 3 connectées
+
+- Similaire à LeNet, plus:
+  - Unité d'activation ReLU
+  - Entraînement plus rapide
+
+- Augmentation de données
+  - Transformation avec étiquettes
+  - Réduction du surapprentissage
+
+https://towardsdatascience.com/implementing-alexnet-cnn-architecture-using-tensorflow-2-0-and-keras-2113e090ad98
+
+## VGG
+
+"16 layers are beyond my imagination!" 
+À l'annonce des résultats de ILSVRC 2014
+
+- Architecture simple (très profond pour l'époque)
+  - Convolutions 3x3
+  - 5 couches de MaxPooling
+  - 3 couches connectées
+
+2-3 semaines d'entraînement sur 4 GPU
+
+## GOOGLENET / INCEPTION
+
+Intuition:
+- Multiples branches
+- Représentation locale
+- Réduction de dimensions
+- Plusieurs templates
+
+Module inception
+
+Classeur auxiliaire (seulement pour apprentissage)
+
+Exemple PyTorch:
+https://github.com/antspy/inception_v1.pytorch/blob/master/inception_v1.py
+
+## RESNET - 3.57%
+
+- Modèle complexe, mais rapide à l'entraînement
+  - Ils facilitent le passage du gradient par rétropropagation!
+
+- Fonctionne similairement aux méthodes par ensembles
+
+- Jusqu'à 152 couches pour V1
+
+[Le document montre un schéma de bloc résiduel et un exemple de code d'implémentation]
+
+## INCEPTION-RESNET
+
+- Les réseaux très profonds ont été centraux dans plusieurs tâches d'apprentissage automatique
+
+- ResNet nous a appris que l'ajout d'un module résiduel facilite l'entraînement
+
+- Mais les blocs Inception eux sont bons pour extraire des caractéristiques à différentes échelles (du nombreux bloc différent et grandes formes)
+
+- Évidemment, il s'agit de réseaux très complexes, puisqu'ils sont composés de nombreux blocs différents en parallèle
+  - E.g. 4 blocs Inception-ResNet-A →
+
+On concatène en taille 256, juste en apprenant à sélectionner les caractéristiques.
+
+Sortie de 32 filtres (e.g. 32 x 3 noyaux)
+
+## [GRAPHIQUE COMPARATIF DES ARCHITECTURES]
+
+Le document montre un graphique comparant différentes architectures CNN selon leur précision Top-1 (%) et le nombre d'opérations (G-Ops). On y voit entre autres:
+- ResNet-18, 34, 50, 101, 152
+- Inception-v3, v4
+- GoogLeNet
+- AlexNet
+- VGG-16, VGG-19
+
+## PLUS RÉCEMMENT...
+
+[Le document montre un graphique récent de l'évolution des architectures avec leurs performances sur ImageNet]
+
+Pour se tenir à jour:
+- https://paperswithcode.com/sota/image-classification-on

@@ -113,6 +113,12 @@ Mon aventure ne fait que commencer ! Mes créateurs travaillent pour me rendre e
 Alors, envie d'essayer ? Donnez-moi un cours, posez-moi une question, ou demandez-moi un QCM, et voyons ensemble comment je peux transformer vos études en une aventure passionnante. Je suis ADAM, et je suis là pour vous !
 """
 
+ABOUT_ADAM_ANSWER_TEMPLATE = """You are Adam and tell about yourself, 
+answer to the user's questions: {question},
+in this language: {language}, 
+Here is your everitiong about you: {adam_presentation}"""
+
+
 # MCQ Generation Prompt
 MCQ_GENERATOR_TEMPLATE = '''
 Text:{text}
@@ -160,7 +166,7 @@ Check from an expert {language} Writer of the above quiz:
 """
 
 # RAG Prompt
-RAG_PROMPT_TEMPLATE = """Answer the question based on the following context and the Chathistory. Especially take the latest question
+RAG_TEMPLATE = """Answer the question based on the following context and the Chathistory. Especially take the latest question
 
 Chathistory: {chat_history}
 

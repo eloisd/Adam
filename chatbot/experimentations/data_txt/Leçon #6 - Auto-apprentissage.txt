@@ -1,0 +1,695 @@
+# Leçon #6 - Auto-apprentissage
+
+## AUTO-ENCODEURS
+
+Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca        Kevin_Bouchard@uqac.ca
+
+## CONTENU DE LA LEÇON #6
+
+**Vous apprendrez:**
+- Ce qu'est un auto-encodeur et à quoi ils peuvent servir
+- Les base de l'auto-apprentissage (self-supervised learning)
+- Les représentations latentes et leur utilité en intelligence artificielle
+- Comment on peut construire un réseau génératif
+
+**Contenu spécifique:**
+- Auto-encodeurs: simples, convolutionnels, récurrents et variationels
+- Quelques types d'auto-apprentissage à base d'auto-encodeurs
+- Architectures: Word2Vec, VQVAE, DRAW
+
+## RETOUR SUR LES PROBLÈMES CLASSIQUES
+
+- Nous avons déjà mentionné le fameux problème du « curse of dimensionality »
+  - Le nombre d'échantillons nécessaires à l'apprentissage augmente de façon exponentielle par rapport au nombre de dimensions!
+
+- Il existe différentes méthodes de réduction de la dimentionalité (features selection)
+  - Parmi celles-ci, le Principal Component Analysis (PCA) qui tente de modifier la représentation avec moins de dimensions
+
+## INTRODUCTION
+
+- Afin de s'attaquer à ce genre de problème, il existe aussi des réseaux de neurones particuliers (optimizing networks)
+
+- Les auto-encodeurs font un travail comparable à un PCA
+  - Conceptuellement similaire aux machines de Boltzmann, mais ce sont des réseaux de neurones et ils sont entraînés avec gradients et rétropropagation
+
+- Ils sont conçus et entraînés pour encoder une entrée sous une façon compressée
+  - En présence d'une version dégradée, ils peuvent reconstruire l'entrée
+
+- C'est donc une technique de compression de données
+  - Le terme fait presque toujours référence aux réseaux de neurones
+
+## AUTO-ENCODEUR
+
+Les auto-encodeurs sont:
+1. Spécifiques aux données. Ils ne compressent que des données similaires (entraîné pour des visages, ne fonctionne pas pour des chats)
+2. Avec pertes. Les sorties décompressées sont dégradées.
+3. Entraînés automatiquement. À partir d'exemples de données. Ils sont non-supervisés ou plus spécifiquement ils font de l'auto-apprentissage.
+
+![Schéma montrant le processus d'auto-encodeur avec Original, Encoder, Compressed et Reconstruction](image-schema-auto-encodeur)
+
+## AUTO-ENCODEUR
+
+- Un réseau de neurones à 3 couches ou plus
+  - Même nombre d'unités en entrée et en sortie → reconstruction!
+  - La/les couche(s) cachée(s) en ont moins
+
+- Ils fonctionnent avec une fonction de perte
+  - ...et un optimiseur (stochastic gradient descent)
+
+- En fait, ils ne sont pas très bon pour compresser...
+  - ... mais ils généralisent bien...!
+  - ...et ont mené à certaines des plus
+
+## TUTORIEL KERAS AUTO-ENCODEUR
+
+- Auto-encodeur simple avec Keras
+  - Sur l'ensemble MNIST (images de 784 pixels)
+  - Couche cachée 32 unités (ratio de compression 24.5)
+  - Activation ReLU et Sigmoid
+
+- L'encodage est (W * x + b) = encoded (avec W = 784 × 32 poids)
+- Le décodage est (W * encoded + b) = decoded (avec W = 32 × 784 poids)
+
+![Images MNIST originales et reconstruites](image-mnist-reconstruction)
+
+- https://blog.keras.io/building-autoencoders-in-keras.html
+
+## DEEP AUTO-ENCODER
+
+- Nous pouvons très facilement modifier nos auto-encodeurs afin de faire des architectures plus profondes
+  - Dans ce cas-ci 3 couches d'encodeurs, 3 couches décodeurs
+  - Ici avec le même exemple l'erreur est inférieure à 1% après 100 Epochs
+
+```python
+input_img = Input(shape=(784,))
+encoded = Dense(128, activation='relu')(input_img)
+encoded = Dense(64, activation='relu')(encoded)
+encoded = Dense(32, activation='relu')(encoded)
+
+decoded = Dense(64, activation='relu')(encoded)
+decoded = Dense(128, activation='relu')(decoded)
+decoded = Dense(784, activation='sigmoid')(decoded)
+```
+
+![Images MNIST originales et reconstruites avec un auto-encodeur profond](image-mnist-deep-reconstruction)
+
+## CONVOLUTIONAL AUTO-ENCODER
+
+- En général, si nos données sont des images, il vaut mieux utiliser des couches de convolution
+
+- Ce n'est pas plus difficile et les convolutional auto-encoders performent mieux
+
+![Schéma d'un auto-encodeur convolutionnel avec encodeur et décodeur](image-conv-autoencoder)
+
+## CONVOLUTIONAL AE DANS KERAS
+
+Voir le code: https://blog.keras.io/building-autoencoders-in-keras.html
+
+```python
+from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
+from keras.models import Model
+from keras import backend as K
+
+input_img = Input(shape=(28, 28, 1))  # adapt this if using `channels_first` image data format
+x = Conv2D(16, (3, 3), activation='relu', padding='same')(input_img)
+x = MaxPooling2D((2, 2), padding='same')(x)
+x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
+x = MaxPooling2D((2, 2), padding='same')(x)
+x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
+encoded = MaxPooling2D((2, 2), padding='same')(x)
+
+# at this point the representation is (4, 4, 8) i.e. 128-dimensional
+
+x = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
+x = UpSampling2D((2, 2))(x)
+x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
+x = UpSampling2D((2, 2))(x)
+x = Conv2D(16, (3, 3), activation='relu', padding='same')(x)
+x = UpSampling2D((2, 2))(x)
+decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
+
+autoencoder = Model(input_img, decoded)
+autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+```
+
+## SELF-SUPERVISED LEARNING
+
+Une approche d'apprentissage non supervisée où le modèle génère ses propres étiquettes à partir des données brutes
+
+C'est une extension directe de l'idée de nos auto-encodeurs!
+
+## PROBLÈME DE L'APPRENTISSAGE
+
+- Ultimement, depuis des décennies nous parlons de trois grands types d'apprentissage
+  - Le supervisé, le non-supervisé et le renforcement
+
+- Mais prenons 5 minutes pour y réfléchir, est-ce que l'apprentissage humain correspond réellement à ces types d'apprentissage?
+
+![Schéma du flux de travail d'apprentissage supervisé](image-supervised-learning-workflow)
+
+## Types d'apprentissage illustrés avec un gâteau
+
+► "Pure" Reinforcement Learning (cherry)
+► The machine predicts a scalar reward given once in a while.
+► A few bits for some samples
+
+► Supervised Learning (icing)
+► The machine predicts a category or a few numbers for each input
+► Predicting human-supplied data
+► 10→10,000 bits per sample
+
+► Self-Supervised Learning (cake génoise)
+► The machine predicts any part of its input for any observed part.
+► Predicts future frames in videos
+► Millions of bits per sample
+
+LeCake est une analogie puissante présentée par LeCun à NeurIPS 2016.
+L'apprentissage non-supervisé serait le gâteau entier!
+
+## AUTO-APPRENTISSAGE
+
+![Schéma du flux de travail d'auto-apprentissage avec exploitation de propriétés](image-self-supervised-workflow)
+
+*https://amitness.com/2020/02/illustrated-self-supervised-learning/*
+
+## APERÇU DES MÉTHODES DE SSL
+
+- Traitement automatique des langues
+  - Représentation de mots
+  - Modèles de langage: ELMo, BERT, GPT
+
+- Reconstruction de versions corrompues
+  - Débruitage, In-painting, Colorisation
+  - Masked AutoEncoder: MAE, VideoMAE, AudioMAE, BeIT, SiamMAE
+
+- Apprentissage contrastif
+  - Contrastive Predictive Coding
+  - Instance discrimination: MoCo, SimCLR, BYOL
+
+- Feature Prediction: DINO, JEPA, etc.
+
+- Text-image: CLIP, CoCa, BLIP, etc.
+
+## DÉBRUITAGE
+
+- Un Denoising Autoencoder (DAE) est une variante des autoencodeurs conçue pour apprendre à reconstruire des données propres à partir de données bruitées
+
+- Une version bruitée de l'entrée x est générée en appliquant une transformation aléatoire
+
+- L'entrée bruitée x est passée à travers un encodeur qui apprend une représentation latente h
+
+- La fonction de perte minimise la différence entre x et x̂ (reconstruction) souvent avec MSE (L2)
+
+![Schéma d'un Denoising Autoencoder](image-denoising-autoencoder)
+
+## DÉBRUITAGE
+
+- Nous allons entraîner l'auto-encodeur pour mapper des images de chiffres bruités à des images de chiffres propres
+
+- Nous prenons MNIST et ajoutons une matrice de bruit gaussien
+
+```python
+from keras.datasets import mnist
+import numpy as np
+
+(x_train, _), (x_test, _) = mnist.load_data()
+
+x_train = x_train.astype('float32') / 255.
+x_test = x_test.astype('float32') / 255.
+x_train = np.reshape(x_train, (len(x_train), 28, 28, 1))  # adapt this if using `channels_first` image data format
+x_test = np.reshape(x_test, (len(x_test), 28, 28, 1))  # adapt this if using `channels_first` image data format
+
+noise_factor = 0.5
+x_train_noisy = x_train + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=x_train.shape)
+x_test_noisy = x_test + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=x_test.shape)
+
+x_train_noisy = np.clip(x_train_noisy, 0., 1.)
+x_test_noisy = np.clip(x_test_noisy, 0., 1.)
+```
+
+## DÉBRUITAGE
+
+- Voici ce à quoi les chiffres bruités ressemblent
+
+```python
+n = 10
+plt.figure(figsize=(20, 2))
+for i in range(n):
+    ax = plt.subplot(1, n, i)
+    plt.imshow(x_test_noisy[i].reshape(28, 28))
+    plt.gray()
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+plt.show()
+```
+
+![Images de chiffres MNIST bruités](image-noisy-digits)
+
+## DÉBRUITAGE
+
+- Le modèle:
+
+```python
+input_img = Input(shape=(28, 28, 1))  # adapt this if using `channels_first` image data format
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(input_img)
+x = MaxPooling2D((2, 2), padding='same')(x)
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
+encoded = MaxPooling2D((2, 2), padding='same')(x)
+
+# at this point the representation is (7, 7, 32)
+
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(encoded)
+x = UpSampling2D((2, 2))(x)
+x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
+x = UpSampling2D((2, 2))(x)
+decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
+
+autoencoder = Model(input_img, decoded)
+autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+```
+
+- Entraînement:
+
+```python
+autoencoder.fit(x_train_noisy, x_train,
+                epochs=100,
+                batch_size=128,
+                shuffle=True,
+                validation_data=(x_test_noisy, x_test),
+                callbacks=[TensorBoard(log_dir='/tmp/tb', histogram_freq=0, write_graph=False)])
+```
+
+- Résultats:
+
+![Comparaison entre images bruitées et reconstruites](image-denoising-results)
+
+## WORD REPRESENTATION
+
+- En NLP, traditionnellement nous considérions les mots comment des symboles discrets
+  - Représentations Bag-Of-Word ou encore One-Hot
+  - Perte d'information! E.g.: Motel=[001000000] et Hôtel=[000000100] incomparables!
+  - La dimensionalité explosait rapidement (100 000 mots = vecteurs de taille 100 000)
+
+- Grâce à l'auto-apprentissage, nous pouvons représenter un mot par son contexte
+
+Elle aime profondément ses enfants, plus que tout au monde.
+J'aime le chocolat noir, surtout quand il est légèrement amer.
+Il aime passer ses week-ends à bricoler dans son atelier.
+
+Même mot, différents contexte... ce sont les mots qui l'accompagnent qui peuvent le représenter!
+
+## WORD2VEC — SKIP-GRAM
+
+- Il s'agit d'un autoencodeur dense
+
+- En entrée on doit fournir des mots encodé avec des vecteurs one-hot
+  - Le modèle peut cependant fonctionner avec de simple indexes (sparse vectors)
+
+- Pour l'entraîner, on génère des instances à partir du corpus de texte
+  - Ces instances vont être toutes les paires possibles dans la fenêtre contextuelle
+  - Par exemple, dans ce cas, pour le mot into nous aurions x, y = {[into,problems], [into,turning], [into,banking], [into,crisis]}
+  - Pour un texte de taille n et une fenêtre contextuelle de taille k nous générons n × 2k instances d'apprentissage
+
+![Schéma du modèle Skip-Gram avec fenêtre contextuelle](image-skipgram-model)
+
+*image de https://web.stanford.edu/class/cs224n*
+
+## WORD2VEC — SKIP-GRAM
+
+- x est le vecteur one-hot du mot de l'instance
+
+- W est la matrice d'embedding
+  - V la taille du vocabulaire ou simplement la longueur du vecteur one-hot en entrée
+  - N la taille de l'espace d'embedding, bref, l'encodage d'un mot devient de taille N
+
+- Étonnamment, pas de fonction d'activation dans le Skip-Gram
+  - La couche cachée dans le modèle skip-gram est simplement un espace de projection
+  - Pas besoin de non-linéarité, car notre objectif est de garder les mots dans un espace vectoriel interprétable!
+
+- En sortie? Nous avons l'entièreté du vocabulaire pour prédire avec un softmax la probabilité qu'un mot soit dans le contexte de l'instance x
+
+![Schéma détaillé du réseau Skip-Gram](image-skipgram-network-schema)
+
+## WORD2VEC
+
+- L'entraînement classique ne serait pas assez efficace dû à la grande taille du vocabulaire
+
+- On utilise plutôt la similarité des vecteurs des matrices W et W' (représentant les paires) pour tenter d'entraîner
+  - Pour une paire x,y leurs vecteurs sont vₓ et vᵧ
+  - Le produit vₓ vᵧ approche 1 si les deux vecteurs sont similaires et 0 si différent
+  - Word2Vec ajoute des paires négatives au hasard, c'est-à-dire où on souhaite minimiser le produit plutôt que le maximiser
+
+## WORD2VEC
+
+- Word2Vec ne peut pas supporter de nouveaux mots
+  - Chaque mot se voit attribuer ses propres paramètres
+  - Les modèles sont donc très gros malgré leur simplicité
+
+- On peut aussi comparer les embeddings de plusieurs mots grâce à des mesures comme la similarité cosinus:
+
+cos θ = (a⃗ · b⃗) / (‖a⃗‖ ‖b⃗‖) = (∑ᵢ(aᵢ * bᵢ)) / (√(∑ᵢ aᵢ² * ∑ᵢ bᵢ²))
+
+![Illustration des différentes relations d'angle entre vecteurs](image-vector-similarities)
+
+*Image: https://kdb.ai/learning-hub/articles/methods-of-similarity/*
+
+## WORD2VEC t-SNE projection
+
+![Projection t-SNE des vecteurs Word2Vec](image-word2vec-tsne)
+
+Gastaldi, J. L. (2021). Why can computers understand natural language? the structuralist image of language behind word embeddings. Philosophy & Technology, 34(1), 149-214.
+
+## ARITHMÉTIQUE
+
+- On peut voir que les représentations capturent plus que les mots eux-mêmes
+
+- Par exemple, on peut faire de l'arithmétique sur les vecteurs:
+  - v = vₖᵢₙg - vₘₐₙ + vwₒₘₐₙ alors le vecteur le plus similaire à v est vqᵤₑₑₙ!
+  - Et nous avons l'équation qui est valide: vₖᵢₙg - vqᵤₑₑₙ ≈ vₘₐₙ - vwₒₘₑₙ
+
+![Tableau des résultats de requêtes avec vecteurs de mots](image-word-vector-arithmetic)
+
+- Une des limites est que les mots peuvent avoir plusieurs sens et dans ce cas, c'est plus difficile de les représenter avec un vecteur unique
+
+- C'est une limite fondamentale qui est outrepassée par les LLM!
+
+Gastaldi, J. L. (2021). Why can computers understand natural language? the structuralist image of language behind word embeddings. Philosophy & Technology, 34(1), 149-214.
+
+## CONTEXT ENCODERS
+
+- En 2016, Pathak et al. s'inspire des words embedding comme GloVe
+
+- Il s'agit d'un autoencodeur convolutionnel
+  - Implémenté sous Caffe et Torch
+  - L'encodeur est grosso modo AlexNet sans dense (227x227 en entrée, 5 conv) et se termine sur un espace latent de 6x6x256=9216
+  - Pas de pooling, pour la reconstruction, le stride donne des meilleurs résultats
+  - ConvTransposées entraînées dans le décodeur (bon pas exactement, mais similaire)
+
+- On introduit une couche spéciale: channel-wise-fully-connected
+  - Dans un FC, nous aurions 9216x9216 paramètres plus les biais (85millions)
+  - Ici, on connecte densément uniquement par feature maps, donc 256 × (6 × 6)² paramètres: 331 776 + biais
+
+*https://openaccess.thecvf.com/content_cvpr_2016/papers/Pathak_Context_Encoders_Feature_CVPR_2016_paper.pdf
+https://github.com/pathak22/context-encoder/blob/master/train.lua#L103*
+
+## CONTEXT ENCODERS
+
+- Les images en entrées contiennent des régions masquées avec des zéros
+  - On utilise 3 stratégies→
+
+- Le réseau est entraîné avec une perte L2 (distance)
+
+- On doit cependant aussi ajouter un discriminateur et une perte adverse (basé sur les GAN que nous verrons plus tard)
+  - C'est assez complexe à mettre en œuvre, car on entraîne en compétition
+  - L'encodeur est entraîné avec un learning rate 10x plus grand que le discriminateur!
+
+![Exemples de masquage d'images pour le Context Encoder](image-context-masking)
+
+## RÉSULTATS
+
+![Résultats de reconstruction d'images avec différentes méthodes](image-context-results)
+
+Figure 6: Semantic Inpainting using different methods. Context Encoder with just L2 are well aligned, but not sharp. Using adversarial loss, results are sharp but not coherent. Joint loss alleviate the weaknesses of each of them. The last two columns
+
+## PRÉDICTION D'UNE VUE
+
+![Schéma du Split-Brain Autoencoder](image-split-brain-schema)
+
+*https://richzhang.github.io/splitbrainauto/*
+
+## SPLIT-BRAIN AUTOENCODERS
+
+- Deux autoencodeurs convolutionnels qui apprennent chacun à prédire ce que l'autre reçoit en entrée
+
+- On utilise la cross-entropie plutôt que la L2
+
+- De plus, le réseau est plutôt entraîné à prédire X = {X₁,X₂} plutôt que simplement X
+
+![Exemples de prédiction entre canaux d'image avec Split-Brain](image-split-brain-examples)
+
+## PRÉDICTION DE CONTEXTE
+
+![Schéma de prédiction de contexte avec patches](image-context-prediction)
+
+Unsupervised visual representation learning by context prediction,
+Carl Doersch, Abhinav Gupta, Alexei A. Efros, ICCV 2015
+
+## RÉSOUDRE DES CASSE-TÊTES
+
+![Exemple de résolution de puzzle visuel avec un tiger](image-jigsaw-puzzle)
+
+Noroozi, M., & Favaro, P. (2016, September). Unsupervised learning of visual representations by solving jigsaw puzzles. In European conference on computer vision (pp. 69-84). Cham: Springer International Publishing.
+
+## RÉSOUDRE DES CASSE-TÊTES
+
+- La partie conv est AlexNet
+
+- Les poids sont partagés jusqu'à la concaténation et la couche connectée 7 (FC7)
+
+![Architecture d'un réseau pour résoudre des puzzles visuels](image-jigsaw-network)
+
+## MASKED AUTOENCODERS ARE SCALABLE VISION LEARNERS
+
+Un Masked Autoencoder (MAE) est une variante des auto-encodeurs qui intègre le concept de masquage partiel des données d'entrée pour forcer le modèle à apprendre à reconstruire les parties manquantes
+
+## MAE
+
+- Une grande partie de l'entrée est masquée aléatoirement
+
+- Le modèle reçoit une version partielle de l'entrée, avec des valeurs remplacées par un masque
+  - Souvent un vecteur de remplissage ou un bruit aléatoire
+
+![Schéma d'un Masked Autoencoder](image-mae-schema)
+
+*https://openaccess.thecvf.com/content/CVPR2022/papers/He_Masked_Autoencoders_Are_Scalable_Vision_Learners_CVPR_2022_paper.pdf*
+
+## MAE
+
+![Exemples de reconstructions par MAE](image-mae-examples)
+
+Figure 2. Example results on ImageNet validation images. For each triplet, we show the masked image (left), our MAE reconstruction (middle), and the ground-truth (right). The masking ratio is 80%, leaving only 39 out of 196 patches. More examples are in the appendix.
+
+## MAE
+
+![Exemples de reconstructions avec différents taux de masquage](image-mae-masking-ratios)
+
+- Évidemment, les modèles plus récents comme celui-ci ne sont pas basés seulement sur les NN vu jusqu'à présent
+
+- L'attention et plus précisément les transformers sont essentiels pour arriver à ces performances
+
+- Il y a des tonnes de modèles à base de MAE:
+  - BeIT, VideoMAE, SiamMAE, M3AE, etc.
+
+## VIDEOMAE
+
+- On masque des cubes aléatoirement
+
+- On reconstruit avec une architecture d'auto-encodeur asymmétrique
+
+- Fonctionne même avec un ratio très élevé 90-95%
+
+![Schéma de fonctionnement de VideoMAE](image-videomae-schema)
+
+## VARIATIONAL AUTOENCODER
+
+Ok, revenons à des modèles un peu plus simples pour le moment
+
+Les VAE sont un cas d'études intéressant pour la suite du cours
+
+## VARIATIONAL AUTOENCODER (VAE)
+
+- Un VAE peut décrire une représentation latente en termes probabilistes
+  - Plutôt que des valeurs discrètes, nous aurons une distribution de probabilité pour chaque attribut latent, ce qui rend l'espace latent continu
+  - Cela facilite l'échantillonnage et l'interpolation aléatoires
+
+- Imaginez que nous essayons de coder une image d'un véhicule et de notre la représentation latente a n attributs (n neurones dans la couche de compression)
+
+## VARIATIONAL AUTOENCODER (VAE)
+
+- Chaque attribut représente une propriété du véhicule, telle que la longueur, la hauteur et la largeur
+  - La longueur moyenne du véhicule est de quatre mètres
+
+- Au lieu de la valeur fixe, le VAE peut décoder cette propriété comme une distribution normale avec une moyenne de 4!
+
+- Ensuite, le décodeur peut choisir d'échantillonner une variable latente dans la plage de sa distribution
+
+## VARIATIONAL AUTOENCODER (VAE)
+
+- Le VAE peut faire la même chose pour les autres propriétés
+
+- Ainsi, il peut généré un nombre illimité de versions!!!
+
+![Schéma conceptuel d'un VAE avec encodage et décodage de propriétés de voiture](image-vae-car-schema)
+
+## ENCODEUR DANS UN VAE
+
+- Soit q_φ(z|x) où z est la variable continue aléatoire de sortie, x est une donnée d'entrée et φ est le paramètre variationel de l'algorithme
+
+- q_φ répartit x selon une loi de distribution gaussienne de moyenne μ^(i) et d'écart-type σ^(i)
+  - Où x^(i) ∈ ℝⁿ sont des vecteurs d'échantillons
+
+- La sortie de l'encodeur est une distribution gaussienne multivariée
+  - Sur les valeurs possibles z qui pourraient avoir générées x
+
+## DÉCODEUR DANS UN VAE
+
+- La fonction du décodeur est p_θ(z|x) ou theta représente les poids du décodeur et le biais
+
+- Premièrement, z est échantillonné stochastiquement (au hasard) à partir de la distribution
+
+- Alors, il est envoyé à travers le décodeur
+
+- La fonction de perte est spéciale
+
+L(θ, φ; x) = −D_KL (q_φ(z|x)‖p_θ(z)) + E_{q_φ(z|x)}[log(p_θ(x|z))]
+
+Kullback-Leibler divergence                    Reconstruction loss
+
+- K-L: mesure combien d'information est perdue pour explorer de nouvelles variations
+
+- La seconde: différence entre l'originale et la reconstruction (comme avant)
+
+## GÉNÉRATION
+
+- Le bottleneck ne génère pas directement l'état latent
+  - Deux vecteurs sur la distribution de chaque variable latente
+  - La moyenne et la variance
+
+![Schéma de génération dans un VAE](image-vae-generation)
+
+## VAE DANS KERAS
+
+- Voir le code: https://blog.keras.io/building-autoencoders-in-keras.html
+
+- https://keras.io/examples/generative/vae/
+
+- https://github.com/wojciechmo/vae - plus complexe, mais sympa!
+
+- Autre explication bien montée: https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
+
+- 
+
+- Vos VAE peuvent être considérablement complexes
+  - Profond
+  - Avec convolutions
+  - Etc.
+
+## VAE VANILLE AVEC PYTORCH
+
+```python
+class VAE(nn.Module):  # 2 usages
+    def __init__(self, input_dim=784, hidden_dim=400, latent_dim=20):
+        super(VAE, self).__init__()
+        
+        # Encodeur
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc_mu = nn.Linear(hidden_dim, latent_dim)  # μ (moyenne)
+        self.fc_logvar = nn.Linear(hidden_dim, latent_dim)  # log(variance)
+        
+        # Décodeur
+        self.fc2 = nn.Linear(latent_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, input_dim)
+```
+
+- Les espaces latents sont parfois flous ou dispersés, rendant la génération moins précise
+
+- Difficile d'apprendre des codes discrets, ce qui peut être important pour des tâches comme la compression ou la synthèse audio
+
+![Exemples de générations de chiffres avec un VAE simple](image-vae-mnist-generation)
+
+## VECTOR QUANTIZED-VAE
+
+- Remplace la distribution gaussienne continue par un dictionnaire discret de codes latents
+
+- Le vecteur généré par l'encodeur est forcé à correspondre aux prototypes eₖ
+
+- Le décodeur reconstruit à partir de zq(x) plutôt que la sortie de l'encodeur
+
+![Schéma du VQ-VAE](image-vq-vae-schema)
+
+## VQ-VAE
+
+- VQ-VAE permet un espace latent discret et produit des résultats plus nets
+
+- Cependant, il est plus complexe à entraîné et on doit implémenter un truc pour le gradient appelé Straight-Through Estimator
+
+- On copie directement le gradient de zq(x) vers ze(x) pendant la rétropropagation
+
+![Comparaison des reconstructions entre ImageNet original et VQ-VAE](image-vq-vae-results)
+
+Figure 2: Left: ImageNet 128x128x3 images, right: reconstructions from a VQ-VAE with a 32x32x1 latent space, with K=512.
+
+## DEEP RECURRENT ATTENTIVE WRITER
+
+- DRAW que nous avons brièvement vu est techniquement un VAE!!!
+  - Représente une forme naturelle de construction d'image
+  - Les parties d'une scène sont créées indépendamment des autres
+  - Les croquis approximatifs sont affinés successivement
+
+- https://jhui.github.io/2017/04/30/DRAW-Deep-recurrent-attentive-writer/
+
+![Exemples de générations itératives avec DRAW](image-draw-examples)
+
+## DEEP RECURRENT ATTENTIVE WRITER
+
+- Combinaison du variational autoencoder et de deux autres modules particuliers
+  - Les unités LSTM
+  - Et un module d'attention
+
+![Schéma de l'architecture DRAW avec séquence d'images](image-draw-architecture)
+
+*Source: https://jhui.github.io/2017/04/30/DRAW-Deep-recurrent-attentive-writer/*
+
+## DEEP RECURRENT ATTENTIVE WRITER
+
+- Plutôt que de prendre l'image en entier cependant, à chaque pas de temps, on prend seulement un morceau
+
+![Séquence temporelle de génération avec DRAW](image-draw-sequence)
+
+- À chaque étape de l'encodage:
+
+x̂^(t) = x − σ(c^(t−1))
+r^(t) = [x^(t),x̂^(t)]
+
+h_enc^(t) = LSTM(h_enc^(t−1), [r^(t), h_dec^(t−1)])
+
+## DEEP RECURRENT ATTENTIVE WRITER
+
+```python
+c_prev = tf.zeros((self.N, 784)) if t == 0 else self.ct[t - 1]  # (N, 784)
+x_hat = x - tf.sigmoid(c_prev)  # residual: (N, 784)
+r = tf.concat([x,x_hat], 1)  # (N, 784)
+
+def encode(self, prev_state, image):
+    # update the RNN with image
+    with tf.variable_scope("encoder", reuse=self.share_parameters):
+        hidden_layer, next_state = self.lstm_enc(image, prev_state)
+        
+    # map the RNN hidden state to latent variables
+    # Generate the means using a FC layer
+    with tf.variable_scope("mu", reuse=self.share_parameters):
+        mu = dense(hidden_layer, self.n_hidden, self.n_z)
+        
+    # Generate the sigma using a FC layer
+    with tf.variable_scope("sigma", reuse=self.share_parameters):
+        logsigma = dense(hidden_layer, self.n_hidden, self.n_z)
+        sigma = tf.exp(logsigma)
+        
+    return mu, logsigma, sigma, next_state
+```
+
+## DEEP RECURRENT ATTENTIVE WRITER
+
+- Le décodeur reprend les principes du VAE
+  - On échantillonne la distribution encodée pour trouver z
+  
+- Par la suite, on s'en sert d'entrée pour la seconde couche de LSTM
+  - Celle-ci fonctionne comme nos LSTM précédent
+  
+- On connecte la sortie h_dec^(t) à une

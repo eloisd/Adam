@@ -1,0 +1,574 @@
+# DEEP LEARNING - Leçon #3
+
+Par Kévin Bouchard Ph.D.
+Professeur titulaire en intelligence artificielle et apprentissage automatique
+Laboratoire d'Intelligence Ambiante pour la reconnaissance d'activités (LIARA)
+Directeur de l'Espace innovation en technologies numériques Hydro-Québec
+Président du Regroupement québécois des maladies orphelines (RQMO)
+Université du Québec à Chicoutimi
+www.Kevin-Bouchard.ca            Kevin_Bouchard@uqac.ca
+
+## CONTENU DE LA LEÇON #3
+
+Vous apprendrez:
+- Comment on passe d'un simple neurone à un réseau profond
+- Comment on entraîne un réseau profond sans boucle
+- L'implémentation concrète et celles assistée par les librairies TF et PyTorch
+
+Contenu spécifique:
+- Multi-Layer Perceptron
+- Propagation avant
+- Fonction de coûts
+- Rétropropagation
+- Exemples de code
+
+## INTRODUCTION
+
+- Le deep learning ou l'apprentissage profond est la tendance la plus populaire en apprentissage automatique
+- Il s'agit d'un ensemble d'algorithmes développés pour l'entraînement de réseau de neurones artificiels à plusieurs couches
+- C'est en 1986 que l'intérêt des NN reprend avec la découverte de l'algorithme backpropagation qui permet l'entraînement de réseaux multicouches plus facilement
+- State-of-the-art pour les problèmes exploitant des données complexes (images, voix, textes)
+  - Nous verrons plus précisément les propriétés
+
+## RETOUR SUR LES NN SIMPLES
+
+[L'image montre un diagramme d'un neurone artificiel simple avec ses composants: entrées, poids, biais, fonction d'activation et sortie]
+
+- À chaque epoch, on mettait à jour les poids: w := w + Δw.  Δw = -η∇J(w)
+- On utilisait la descente du gradient ou SGD (version itérative)
+- La fonction objective à optimiser était la Sum of Squared Errors (SSE) ou encore Log-Likelihood (NLL)
+  - Selon si Adaline ou Logistic
+
+## APPRENTISSAGE PAR ENSEMBLE?
+
+- L'apprentissage par ensemble (ensemble learning) repose sur l'idée de combiner plusieurs modèles pour améliorer les performances de prédiction par rapport à un seul modèle
+  - Avec le Bagging on réduit la variance et diminue les risques de surapprentissage (e.g. Random Forest)
+  - Avec le Boosting on augmente la robustesse en compensant les erreurs individuelles des modèles (e.g. Adaboost, Gradient Boosting)
+  - Avec le Stacking, on peut exploiter les forces et les faiblesses de différents modèles en apprenant automatiquement comment « voter »
+  - Toutes les techniques tendent à améliorer la justesse (accuracy)!
+
+- En deep learning, nous tentons de tirer profit d'un peu toutes ces techniques!
+
+## MULTIPLES COUCHES
+
+- Nos NN sont simple couche, même s'il y a une couche d'entrées et une de sorties à cause du lien unique qui les lie
+- On peut ajouter une couche cachée de neurones pour former un réseau de neurones multicouche à propagation avant (multi-layer feed forward NN)
+- Les neurones de la couche cachée sont complètement connectés à la couche d'entrées et à la couche de sortie
+- Si + d'un niveau caché, alors besoin des techniques du deep learning
+
+[L'image montre un réseau neuronal à 3 couches: couche d'entrée, couche cachée et couche de sortie, avec les connexions entre neurones]
+
+## PERCEPTRON MULTICOUCHE
+
+- Nous notons maintenant l'unité d'activation i de la couche ℓ: a_i^(ℓ)
+- L'activation des unités à la couche d'entrée est:
+  a^(i) = [a_0^(1), a_1^(1), ..., a_m^(1)] = [1, x_1^(i), ..., x_m^(i)]
+
+- Chaque unité k de la couche ℓ est connecté à l'aide d'un poids à chaque unité j du niveau ℓ+1: w_j,k^(ℓ)
+- Attention! Il ne faut pas confondre avec l'échantillon i dans x_m^(i)
+
+## MULTICLASSE NATIVEMENT?
+
+[L'image montre du code PyTorch pour la conversion d'étiquettes en représentation one-hot]
+
+- [0 1 0 1 0 0 0 1 0]
+
+Étiquettes d'origine:
+tensor([0, 1, 2, 1, 0])
+
+Représentation One-Hot:
+tensor([[1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+        [0, 1, 0],
+        [1, 0, 0]])
+
+## PERCEPTRON MULTICOUCHE
+
+- Une unité dans la couche de sortie permet de faire de la classification binaire
+- À l'aide de la représentation de classe par vecteur one-hot, on peut passer aux problèmes multiclasses
+
+[L'image montre un réseau neuronal multicouche avec des vecteurs d'encodage one-hot]
+
+0 = [1, 0, 0], 1 = [0, 1, 0], 2 = [0, 0, 1]
+
+Contrairement à la représentation de classe en entier, les one-hot ne causent pas de problèmes avec les algorithmes basés sur des distances
+
+## PERCEPTRON MULTICOUCHE
+
+- Pourquoi w_j,k^(ℓ) plutôt que w_k,j^(ℓ)? Simplement une question mathématique!
+
+- Matrice W^(ℓ) ∈ ℝ^j×[k+1] pour représenter les poids de la couche ℓ
+  - j est le nombre d'unités à la couche ℓ+1
+  - k le nombre d'unités à la couche ℓ
+
+- Donc, un réseau à L couches a L-1 matrices de poids W
+
+## PROPAGATION AVANT
+
+- La propagation avant permet de calculer la ou les sorties du réseau multicouche
+- Puisque notre réseau est complètement connecté, nous calculons l'activation d'une unité a_1^(2) de cette façon:
+  z_1^(2) = a_0^(1)w_1,0^(1) + a_1^(1)w_1,1^(1) + ... + a_m^(1)w_1,m^(1)
+  
+  a_1^(2) = φ(z_1^(2))
+
+- z_1^(2) est l'entrée nette et φ(·) la fonction d'activation
+  - Celle-ci doit être dérivable en tout point (gradient)
+  - Non linéaire pour les problèmes complexes (e.g.:sigmoid)
+  φ(z) = 1/(1+e^-z)
+
+## PROPAGATION AVANT
+
+- Chaque couche sert d'entrée à la couche suivante sans qu'il n'y ait de boucle
+  - Ce n'est pas le cas dans un recurrent neural network, où au contraire il y a une boucle!
+  - Nous verrons plus tard quelques modèles avec des boucles
+
+- Attention! Même si on nomme ce modèle multi-layer perceptron, les couches sont composées d'unités sigmoids, non pas de perceptrons!
+  - De plus, les valeurs retournées par les unités sont continues (0..1)
+  - Nous n'utiliserons plus le fameux quantizer en deep learning
+
+## PROPAGATION AVANT
+
+- Question de simplicité, nous utiliserons une notation plus compacte pour l'activation:
+  z^(2) = W^(1)a^(1)
+  a^(2) = φ(z^(2))
+
+- a^(1) est le vecteur de features de taille m+1 correspondant à l'échantillon x^(i) plus le biais
+- m est le nombre d'entrées dans l'unité
+- W^(1) est la matrice de taille h × [m + 1] avec h représentant le nombre d'unités cachées
+- z^(2) devient le vecteur d'entrées nettes h × 1 pour l'activation
+
+## PROPAGATION AVANT
+
+- De plus, on peut généraliser aux n échantillons:
+
+  Z^(2) = W^(1)[A^(1)]^T
+
+- A^(1) est la matrice n × [m + 1]
+- Z^(2) est la matrice h × n
+
+- Avec notre matrice Z^(2), nous pouvons calculer la matrice h × n d'activation du niveau suivant: A^(2) = φ(Z^(2))
+
+## PROPAGATION AVANT
+
+- La matrice d'entrées nettes t × n de la couche suivante (output) devient:
+  Z^(3) = W^(2)A^(2)
+  
+  - t est le nombre d'unités de la couche de sorties
+  - W^(2) est la matrice de poids t × h
+
+- Finalement, dans notre exemple, les sorties sont trouvées grâce à l'application de la fonction d'activation sur Z^(3)
+  A^(3) = φ(Z^(3))
+  
+  - A^(3) est la matrice de réels de taille t × n, où t est le nombre de classes et n le nombre d'échantillons
+
+## PROPAGATION AVANT AVEC CHIFFRES!
+
+a^(1) = [1, 2, 3], W^(1) = [[0.5  1  -0.5], [-1  2  1.5]] × [0.25, 0.5] , W^(2) = [[0  0.1], [-1  1], [0.1  0]] × [1, -2, -1]
+
+z^(2) = W^(1)a^(1) = [[0.5  1  -0.5], [-1  2  1.5]] × [1, 2, 3] + [0.25, 0.5] = 
+
+[0.5 * 1 + 1 * 2 - 0.5 * 3] + [0.25] = [1] + [0.25] = [1.25]
+[-1 * 1 + 2 * 2 + 1.5 * 3] + [0.5] = [7.5] + [0.5] = [8]
+
+a^(2) = φ(z^(2)) = [1/(1+e^(-1.25)), 1/(1+e^(-8))] ≈ [0.7773, 0.9997]
+
+## PROPAGATION AVANT AVEC CHIFFRES!
+
+a^(1) = [1, 2, 3], W^(1) = [[0.5  1  -0.5], [-1  2  1.5]] × [0.25, 0.5] , W^(2) = [[0  0.1], [-1  1], [0.1  0]] × [1, -2, -1]
+
+z^(3) = W^(2)a^(2) = [[0  0.1], [-1  1], [0.1  0]] × [0.7773, 0.9997] + [1, -2, -1] =
+
+[0 * 0.7773 + 0.1 * 0.9997] + [1] = [0.09997] + [1] = [1.09997]
+[-1 * 0.7773 + 0.9997] + [-2] = [0.2224] + [-2] = [-1.7776]
+[0.1 * 0.7773 + 0 * 0.9997] + [-1] = [0.07773] + [-1] = [-0.92227]
+
+a^(3) = φ(z^(3)) = [1/(1+e^(-1.09997)), 1/(1+e^(-(-1.7776))), 1/(1+e^(-(-0.92227)))] ≈ [0.7503, 0.0978, 0.2539]
+
+## EXEMPLE APPLIQUÉ
+
+## CLASSIFICATION DE CHIFFRES
+
+- Nous utiliserons le dataset très connu MNIST qui contient:
+  - 60 000 images d'entraînement
+  - 10 000 images de tests
+  - Les images sont les chiffres 0 à 9 écris à la main
+- http://yann.lecun.com/exdb/mnist/
+
+## QUELQUES RÉSULTATS SUR LA PAGE:
+
+[L'image montre un tableau comparatif des performances de différents modèles de classification sur MNIST, incluant des classificateurs linéaires, K-Nearest Neighbors, SVMs et réseaux neuronaux]
+
+## VISUALISATION
+
+[Le code Python utilisant matplotlib pour visualiser des exemples d'images MNIST]
+
+[L'image montre des exemples de chiffres manuscrits de 0 à 9 du dataset MNIST]
+
+## VISUALISATION (SUITE)
+
+[Le code Python similaire visualisant plusieurs exemples du chiffre 7]
+
+[L'image montre 25 exemples différents du chiffre 7 manuscrit]
+
+## IMPLÉMENTATION ET TEST
+
+```python
+nn = NeuralNetMLP(
+    n_output=10,
+    n_features=X_train.shape[1],
+    n_hidden=50,
+    l2=0.1, l1=0.0,
+    epochs=1000,
+    eta=0.001,
+    alpha=0.001,
+    decrease_const=0.00001,
+    minibatches=50,
+    shuffle=True, random_state=1)
+```
+
+- L2 réduit le surapprentissage
+- 784 unités d'entrées
+- 50 unités cachées
+- 10 unités de sorties (classes)
+- Alpha ajoute un momentum du gradient de l'epoch précédent pour accélérer l'apprentissage
+  Δw_t = η∇J(w_t) + αΔw_{t-1}
+- Decrease (d) permet de réduire le taux d'apprentissage au fil du temps
+  η/(1 + t × d)
+
+## IMPLÉMENTATION ET TEST
+
+- Entraînement du modèle:
+```python
+nn.fit(X_train, y_train, print_progress=False)
+```
+
+- Graphique des coûts (cost_) pour chaque minibatchs (50*1000epochs):
+
+[Code Python pour générer un graphique montrant la diminution du coût d'apprentissage]
+
+[L'image montre une courbe d'apprentissage descendante, partant d'environ 1500-2000 et diminuant progressivement jusqu'à environ 300-400]
+
+Voir https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html
+
+## ÉVALUATION
+
+- Évaluons le modèle avec l'ensemble de test:
+```python
+y_test_pred = nn.predict(X_test)
+acc = np.sum(y_test == y_test_pred, axis=0) / X_test.shape[0]
+print('Test accuracy: %.2f%%' % (acc * 100))
+
+Test accuracy: 95.62%
+```
+
+- Le modèle pourrait être amélioré à l'aide de l'optimisation des hyperparamètres
+  - Celui-ci en contient plusieurs: learning rate, nombre d'unités cachées, alpha, decrease_const et régularisation L1 & L2
+  - Cette partie peut s'avérer assez complexe dans certains problèmes d'apprentissage
+
+## IMPLÉMENTATION EN MINIBATCHS
+
+- L'utilisation des minibatchs pour le calcul de nos gradients est un type particulier de stochastic gradient descent
+  - Plutôt que de calculer sur un échantillon, nous le faisons sur k
+  - 1 < k < n
+
+- Plus rapide que gradient descent (k=n)
+- Mais plus efficace en implémentation que SGD (k=1)
+  - Implémentation des techniques de calculs vectoriels!
+  - Beaucoup plus efficace!
+
+- C'est un peu comme un sondage avant des élections...
+
+## AVEC TF/KERAS
+
+[Code Python montrant l'implémentation d'un réseau neuronal avec TensorFlow/Keras pour la classification MNIST]
+
+## EXÉCUTION DE L'EXEMPLE
+
+```
+469/469 [==========================] - 1s 3ms/step - loss: 0.3595 - accuracy: 0.9010 - val_loss: 0.1905 - val_accuracy: 0.9483
+Epoch 2/6
+469/469 [==========================] - 1s 2ms/step - loss: 0.1612 - accuracy: 0.9543 - val_loss: 0.1351 - val_accuracy: 0.9593
+Epoch 3/6
+469/469 [==========================] - 1s 2ms/step - loss: 0.1143 - accuracy: 0.9678 - val_loss: 0.1051 - val_accuracy: 0.9689
+Epoch 4/6
+469/469 [==========================] - 1s 2ms/step - loss: 0.0878 - accuracy: 0.9750 - val_loss: 0.0981 - val_accuracy: 0.9708
+Epoch 5/6
+469/469 [==========================] - 1s 2ms/step - loss: 0.0707 - accuracy: 0.9797 - val_loss: 0.0846 - val_accuracy: 0.9748
+Epoch 6/6
+469/469 [==========================] - 1s 2ms/step - loss: 0.0583 - accuracy: 0.9830 - val_loss: 0.0801 - val_accuracy: 0.9755
+```
+
+- On peut voir que c'est beaucoup plus rapide avec Tensorflow que notre code
+- Les résultats sont aussi meilleurs, même si nous n'avons rien optimisé
+- En quelques lignes, nous avons un modèle qui dépasse la majorité des méthodes d'apprentissage automatique classique!
+
+## AVEC PYTORCH
+
+[Code Python montrant l'implémentation d'un réseau neuronal avec PyTorch pour la classification MNIST]
+
+```
+Epoch [1/5], Loss: 0.1187
+Epoch [2/5], Loss: 0.1095
+Epoch [3/5], Loss: 0.0239
+Epoch [4/5], Loss: 0.1840
+Epoch [5/5], Loss: 0.1625
+Précision sur l'ensemble de test : 96.30%
+```
+
+## ENTRAÎNEMENT
+
+Calcul de la fonction de coûts
+Algorithme de rétropropagation
+
+## FONCTION DE COÛTS
+
+- La fonction de coût ici est la même que pour logistic regression:
+  J(w) = -∑(i=1 to n) y^(i) log(a^(i)) + (1-y^(i)) log(1-a^(i))
+
+- a^(i) est l'activation sigmoid de l'unité d'une couche: φ(z^(i))
+- Pour un échantillon i
+
+- En ajoutant la régularisation L2 (pour réduire le surapprentissage) on obtient:
+  J(w) = -[∑(i=1 to n) y^(i) log(a^(i)) + (1-y^(i)) log(1-a^(i))] + λ/2‖w‖²₂
+
+## FONCTION DE COÛTS
+
+- Puisque nous voulons faire de la classification multi classes, le vecteur de sortie est de taille t × 1 à comparer avec la cible dans le vecteur one hot (lui aussi de taille t)
+
+- E.g. l'activation à la couche de sortie (3) et la comparaison avec la classe cible #2 pourrait ressembler à ceci:
+  a^(3) = [0.1, 0.9, ..., 0.3], y = [0, 1, ..., 0]
+
+## FONCTION DE COÛTS
+
+- Il faut généraliser notre fonction de coûts à toutes les unités j:
+  - Ici, (i) représente l'échantillon d'entraînement
+
+  J(w) = -[∑(i=1 to n)∑(j=1 to m) y_j^(i) log(φ(z_j^(i))) + (1-y_j^(i)) log(1-φ(z_j^(i)))] + λ/2 ∑(l=1 to L-1)∑(i=1 to u_l)∑(j=1 to u_{l+1}) (w_{j,i}^(l))²
+
+- L'équation fait un peu peur, mais elle représente simplement les coûts pour toutes les unités du réseau et tous les échantillons de l'ensemble d'entraînement
+
+- De plus, λ/2 ∑(l=1 to L-1)∑(i=1 to u_l)∑(j=1 to u_{l+1}) (w_{j,i}^(l))² est la pénalité L2 (l est la couche!)
+
+## FONCTION DE COÛTS
+
+- Objectif: minimiser notre fonction de coûts
+
+- Il faut donc calculer la dérivée partielle de la matrice de poids par rapport à tous les poids du réseau:
+  ∂/∂w_{j,i}^(l) J(W)
+
+  - À noter que W est en fait un ensemble de matrices qui n'ont généralement pas la même dimension
+  - Leur taille dépend du nombre d'unités des différents niveaux
+
+## CODE
+
+[L'image montre un extrait de code Python pour le calcul de la fonction de coût]
+
+- L1 tend à éliminer des caractéristiques
+- C'est un peu du feature selection!
+- L2 diminue les valeurs des poids, mais sans atteindre 0
+
+## FONCTIONS SIMPLES
+
+- Ok, mais concrètement, comment L1 peut-elle faire de la sélection de caractéristiques?
+- En fait, si on regarde l'implémentation du gradient, nous avons:
+
+```python
+grad1[:, 1:] += self.l2 * w1[:, 1:]
+grad1[:, 1:] += self.l1 * np.sign(w1[:, 1:])
+```
+
+- Soit Δ += λ * W^(l) pour L2 et Δ += {λ * 1, w > 0; λ * -1, w < 0}, ∀w ∈ W^(l) pour L1
+
+- C'est qu'en dérivant W^(l) = W^(l) - ηΔ^(l), sachant que delta est la dérivée de la fonction de coûts ∂J(W)/∂W et qu'on y additionne simplement les termes L1 et L2
+
+## FONCTIONS SIMPLES
+
+[L'image montre des graphiques des fonctions L1 et L2 et leurs dérivées]
+
+- La conséquence est que pour L1, si une soustraction d'un w a pour effet d'en changer le signe
+- Par exemple de +0.3 à -0.1
+- Alors on croise le 0 et L1 fait passer le w à 0
+
+## BACKPROPAGATION
+
+Permet d'apprendre les poids dans un réseau de neurones efficacement
+
+Nous verrons d'abord intuitivement comment la méthode fonctionne, puis nous décrivons un peu plus formellement
+
+## BACKPROPAGATION
+
+- Algorithme efficace (d'un point de vue algorithmique) qui permet de calculer les dérivées d'une fonction de coûts complexe
+  - On utilise les dérivées pour apprendre les poids (comme d'habitude)
+  - Dans le contexte de nos réseaux multicouches, nous avons beaucoup de poids et travaillons généralement en très haute dimension!
+
+- Nos fonctions de coûts ne sont plus convexes et lisses, elles sont concaves et inégales
+  - Cas plus difficile en optimisation!!!
+
+## BACKPROPAGATION
+
+- La rétropropagation est utilisée dans la majorité des applications courantes de l'apprentissage profond, même si elle est souvent cachée aux développeurs
+- Cependant, voici quelques exceptions si vous souhaitez aller au-delà du cadre de ce cours:
+  - Réseaux de neurones utilisant des algorithmes évolutionnaires: Au lieu d'utiliser les gradients pour optimiser les poids, ces algorithmes simulent le processus de sélection naturelle
+  - Hebbian Learning: Un apprentissage non supervisé basé sur la théorie biologique de Hebb
+  - Echo State Networks (ESNs): Un type de réseau de neurones récurrents où les poids internes du réseau ne sont pas entraînés (pas besoin de rétropropagation)
+  - Quantum Neural Networks (QNN): Certaines implémentations de réseaux de neurones quantiques n'utilisent pas la rétropropagation, car le processus d'entraînement repose sur des principes de calcul quantique qui ne dépendent pas de la descente de gradient
+
+## BACKPROPAGATION
+
+- L'intuition derrière l'algorithme de rétropropagation est de renverser une opération pour réduire les coûts en calculs
+  - En avant, il faut successivement multiplier des matrices ensemble
+  - En arrière, on part d'un vecteur qu'on multiplie par une matrice et qui résulte en un autre vecteur à multiplier par une autre matrice...
+
+- On se rappelle que pour notre MLP, nous avons appliqué la propagation avant de cette façon:
+
+Z^(2) = W^(1)[A^(1)]^T    ← Entrées nettes de la couche caché
+A^(2) = φ(Z^(2))
+Z^(3) = W^(2)A^(2)        ← Entrées nettes de la couche de sorties
+A^(3) = φ(Z^(3))
+                          ← Appartenance aux classes
+
+## BACKPROPAGATION
+
+- Nous propageons par avant les caractéristiques en entrées via les connections du réseau
+- De façon plus visuelle, voici ce que nous faisons:
+
+[L'image montre un diagramme de propagation avant dans un réseau de neurones avec des flèches vertes montrant le flux d'information]
+
+## COMPOSITION DE FONCTION
+
+- Si notre sortie est la composition des fonctions g ∘ f(x) = g(f(x))
+- Alors la composition de dérivées est (g ∘ f(x))′(x) = g′(f(x))f′(x)
+- Bref, si nous avons un graphe du type:
+
+z = g(y)     g   Dans graphe computationnel, les variations des variables sont liées
+             ↑   par les dérivées partielles:
+y = f(x)     f   
+             ↑   Δz ≈ g'(f(x))Δy  ou encore: Δz ≈ g'(f(x)) f'(x)Δx
+x                
+                  Le changement dans y est donc Δy ≈ f'(x)Δx
+                  
+                  La variation ou perturbation de x est Δx
+
+## GRAPHE COMPUTATIONNEL
+
+[Diagramme montrant un graphe computationnel avec des nœuds x, y et z]
+
+z = ∑_i g_i(y_i)
+    Soit Δz ≈ ∑_i g'_i(∑_j f_j→i(x_j)) Δy_i
+    Et... Δz ≈ ∑_i g'_i(∑_j f_j→i(x_j)) ∑_j f'_j→i(x_j) Δx_j
+
+y_i = ∑_j f_j→i(x_j)
+    Soit Δy_i ≈ ∑_j f'_j→i(x_j) Δx_j
+
+Δx_1, ..., Δx_m
+
+## LES GRADIENTS DE Z
+
+- Grosso modo, on pourrait récrire la variation de la sortie Δz comme le produit scalaire:
+  Δz = ⟨∇z, Δx⟩
+
+- Sachant que ∇z est le vecteur de gradients qui capture les sensibilités partielles de z par rapport aux x_j et la variation Δx
+  (∇z)_j = ∑_i g'_i(∑_j f_j→i(x_j)) ∑_j f'_j→i(x_j)
+
+- Où chaque (∇z)_j est un terme de gradient pour la composante j
+- L'idée sera d'exploiter la programmation dynamique pour éviter de recalculer
+
+## SIMPLIFIONS LES CHOSES!
+
+- Dans la propagation arrière, nous propageons l'erreur de la fin vers le début grâce à la règle de la chaîne
+- Pour notre MLP, nous commençons donc par trouver le vecteur d'erreur suivant:
+  δ^(3) = a^(3) - y
+
+  - y est le vecteur des étiquettes (ou des vraies classes)
+
+- Ensuite, on calcul l'erreur de la couche cachée:
+  δ^(2) = (W^(2))^T (δ^(3) * ∂φ(z^(2))/∂z^(2))
+
+- La dernière partie est la dérivée de la fonction d'activation (sigmoid):
+  ∂φ(z^(2))/∂z^(2) = (a^(2) * (1 - a^(2)))
+
+## BACKPROPAGATION
+
+δ^(2) = (W^(2))^T (δ^(3) * ∂φ(z^(2))/∂z^(2))
+
+- Regardons plus concrètement le calcul
+- W^(2) est une matrice t × h (nb classes, nb unités cachées)
+- δ^(3) est le vecteur d'erreurs t × 1
+- Celui-ci est multiplié par la dérivée (a^(2) * (1 - a^(2))) qui est un vecteur t × 1 (multiplication par pair d'éléments)
+
+- Donc la matrice transposée résultante h × t devient un vecteur h × 1 après la multiplication
+  - le produit croisé d'une matrice m,n donne le vecteur de taille m
+- Le nouveau vecteur d'erreurs δ^(2) est donc de taille h × 1
+
+## BACKPROPAGATION
+
+- Lorsque les δ ont été trouvé, nous pouvons retravailler la dérivée de la fonction de coût:
+  ∂/∂w_{i,j}^l J(W) = a_j^l δ_i^(l+1)
+
+- Il faut accumuler la dérivée partielle pour chaque nœud j de la couche l et la ième erreur du nœud au niveau l + 1
+  Δw_{i,j}^(l) := Δw_{i,j}^(l) + a_j^(l) δ_i^(l+1)
+
+- Pour chaque échantillon de l'ensemble d'entraînement!
+
+## BACKPROPAGATION
+
+- On peut écrire l'équation précédente sous forme vectorielle (afin d'inclure le calcul pour les échantillons)
+  ΔW^(l) := Δ^(l+1)(A^(l))^T
+
+  - Où Δ^(l+1) est la matrice d'erreurs
+
+- Enfin, nous pouvons régulariser:
+  ΔW^(l) := ΔW^(l) + λ^(l)
+
+- Finalement, maintenant que nous avons les gradients, il suffit de faire un pas opposé pour mettre à jour les poids:
+  W^(l) := W^(l) - ηΔW^(l)
+
+## BACKPROPAGATION
+
+- Retour sur le code!
+
+[L'image montre un diagramme du processus de backpropagation dans un réseau de neurones]
+
+## NON-LINÉARITÉ
+
+- Bien que chaque unité du MLP soit indépendamment linéaire, si les fonctions d'activation sont non-linéaires, leur combinaison engendre un modèle non-linéaire
+- Si nous utilisons uniquement une activation linéaire, alors peu importe le nombre de couches, le réseau reste toujours un modèle linéaire
+  - Et ne gagne pas en expressivité
+- Supposons 2 couches linéaires z^(2) = W^(1)a^(1) + b^(1) et z^(3) = W^(2)z^(2) + b^(2) et substituons z^(2) dans z^(3):
+  z^(3) = W^(2)(W^(1)a^(1) + b^(1)) + b^(2)
+  z^(3) = W^(2)W^(1)a^(1) + W^(2)b^(1) + b^(2)
+
+- On peut écrire cette équation avec un modèle linéaire simple couche:
+  z^(3) = W^(')a^(1) + b^(')
+
+  - Où W^(') = W^(2)W^(1) et b^(') = W^(2)b^(1) + b^(2)
+
+## APPROXIMATION UNIVERSELLE
+
+- Nous ne pouvons pas faire ça si a^(2) = 1/(1+e^-z)
+- De plus, Cybenko G. a montré en 1989 qu'un réseau sigmoid à propagation avant est un approximateur universel
+  - Si le nombre de neurones dans la couche cachée est suffisamment grand
+  - Le MLP peut approximer n'importe quelle fonction continue
+  - La précision arbitraire dépendrait uniquement de la densité!
+
+- Depuis, la preuve a été généralisée à d'autres fonctions d'activation et à des réseaux de profondeur arbitraire (e.g. ReLU)
+- Bon, c'est de la théorie, mais en connaissant cette propriété ça nous donne une idée de la puissance du deep learning!
+
+## CONCLUSION
+
+- Pour faire du deep learning, il faut:
+  - Des fonctions différentiables
+  - Un algorithme de calcul de gradient efficace: backpropagation
+  - Des fonctions d'activation non-linéaires
+  - Un optimiseur itératif de paramètres
+
+  ... et surtout une quantité importante de données!!!
+
+## RÉFÉRENCES ORIGINALES
+
+| MLP | |
+|---|---|
+| MNIST | |
+| Backpropagation | |
+| Approximation sigmoid | Cybenko, G. (1989). Approximation by superpositions of a sigmoidal function. Mathematics
