@@ -8,7 +8,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, System
 from langgraph.graph.message import add_messages
 from langchain.schema import Document
 
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode
 
@@ -94,7 +94,7 @@ def graph():
     workflow_rag.add_node("generate_mcq", generate_mcq)
     workflow_rag.add_node("generate_qa", generate_qa)
 
-
+    workflow_rag.add_edge(START, "question_rewriter")
     workflow_rag.add_edge("question_rewriter", "agent")
     workflow_rag.add_edge("agent", "tools")
     workflow_rag.add_conditional_edges(
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     from langchain_core.runnables.graph import MermaidDrawMethod
 
     graph = graph()
-    
+
     display(
         Image(
             graph.get_graph().draw_mermaid_png(

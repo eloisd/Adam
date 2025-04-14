@@ -11,7 +11,7 @@ import {
   SystemMessage 
 } from 'langchain/schema/messages';
 import { Document } from 'langchain/document';
-import { StateGraph, END } from 'langgraph/graph';
+import { StateGraph, START, END } from 'langgraph/graph';
 import { MemorySaver } from 'langgraph/checkpoint/memory';
 import { ToolNode } from 'langgraph/prebuilt';
 import { ChatPromptTemplate } from 'langchain/prompts';
@@ -151,6 +151,7 @@ export function createGraph() {
   workflow_rag.addNode("generate_qa", generate_qa);
 
   // Ajout des arêtes
+  workflow_rag.addEdge(START, "question_rewriter");
   workflow_rag.addEdge("question_rewriter", "agent");
   workflow_rag.addEdge("agent", "tools");
   workflow_rag.addConditionalEdges(

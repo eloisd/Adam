@@ -71,7 +71,7 @@ def off_topic_response(state: AgentState):
 def retriever_tool(state: AgentState):
     """Only Simple question-answering tool. About the deeplearning topic """
     print("Entering retriever_tool")
-    return f"retrieve: Retrieved {len(documents)} documents"
+    return f"retrieve: Retrieved x documents"
 
 @tool
 def off_topic_response_tool(state: AgentState):
@@ -92,20 +92,12 @@ def about_chatbot_tool(state: AgentState):
 def mcq_tool(state: AgentState):
     """Only MCQ creation, generation, about the deeplearning topic """
     print("Entering mcq_tool")
-    state["tool_used"] = "retrieve_for_MCQ"
-    documents = retriever.invoke(state["rephrased_question"])
-    print(f"retrieve_for_MCQ: Retrieved {len(documents)} documents")
-    state["documents"] = documents
     return state
 
 @tool
 def qa_tool(state: AgentState):
     """Only exercise question to develop creation, generation, about the deeplearning topic """
     print("Entering qa_tool")
-    state["tool_used"] = "retrieve_for_QA"
-    documents = retriever.invoke(state["rephrased_question"])
-    print(f"retrieve_for_QA: Retrieved {len(documents)} documents")
-    state["documents"] = documents
     return state
 
 TOOLS = [retriever_tool, mcq_tool, qa_tool, about_chatbot_tool, off_topic_response_tool]
