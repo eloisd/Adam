@@ -1,0 +1,24 @@
+# Dépendances
+node_modules
+npm-debug.log
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Fichiers de build
+dist
+build
+coverage
+
+# Divers
+.git
+.gitignore
+.github
+.vscode
+.idea
+README.md
+docker-compose.yml
+Dockerfile
+*.md

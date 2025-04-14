@@ -29,7 +29,7 @@ Clonez ce repository sur votre machine locale :
 
 ```bash
 git clone <URL-du-repository>
-cd adam
+cd Adam
 ```
 
 ### 2. Installation du Backend (NestJS)
@@ -39,6 +39,7 @@ Allez dans le dossier `Backend` et installez les dépendances nécessaires avec 
 ```bash
 cd Backend
 npm install
+cd ..
 ```
 
 ### 3. Installation du Frontend (Angular)
@@ -48,6 +49,7 @@ Allez dans le dossier `Frontend` et installez les dépendances nécessaires avec
 ```bash
 cd Frontend
 npm install
+cd ..
 ```
 
 ## Lancer le projet
@@ -57,7 +59,9 @@ npm install
 Dans le dossier `Backend`, vous pouvez démarrer l'application avec la commande suivante :
 
 ```bash
+cd Backend
 nest start --watch
+cd ..
 ```
 
 Le backend devrait maintenant être accessible à l'adresse suivante : `http://localhost:3000`.
@@ -67,10 +71,20 @@ Le backend devrait maintenant être accessible à l'adresse suivante : `http://l
 Dans le dossier `Frontend`, vous pouvez démarrer l'application avec la commande suivante :
 
 ```bash
+cd Frontend
 ng serve
+cd ..
 ```
 
 Le frontend devrait maintenant être accessible à l'adresse suivante : `http://localhost:4200`.
+
+### 3. Lancer Docker de ChromaDB
+
+```bash
+cd ChromaDB
+docker-compose up -d
+cd ..
+```
 
 ## Fonctionnalités
 
