@@ -1,254 +1,251 @@
-/**
- * Ce module implémente le workflow du graphe pour le chatbot Adam.
- */
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import * as fs from "fs";
+import * as path from "path";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ChatOpenAI } from "@langchain/openai";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { CompiledGraph, END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { ConfigService } from "@nestjs/config";
+import { RagSService } from "./rag";
+import { McqService } from "./mcq";
+import { QaService } from "./qa";
+import { AboutChatbotService } from "./about_chatbot";
+import { ToolsManagerService } from "./tools_manager";
+import { AgentState } from "./agent_state";
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { 
-  BaseMessage, 
-  HumanMessage, 
-  AIMessage, 
-  SystemMessage 
-} from 'langchain/schema/messages';
-import { Document } from 'langchain/document';
-import { StateGraph, START, END } from 'langgraph/graph';
-import { MemorySaver } from 'langgraph/checkpoint/memory';
-import { ToolNode } from 'langgraph/prebuilt';
-import { ChatPromptTemplate } from 'langchain/prompts';
-import { ChatOpenAI } from 'langchain/chat_models/openai';
+@Injectable()
+export class GraphService implements OnModuleInit {
+  private graph: CompiledGraph<any>;
+  private llm: ChatOpenAI;
 
-import { AgentState } from './agentState';
-import { 
-  retrieve, 
-  retrieval_grader, 
-  proceed_router, 
-  generate_answer, 
-  refine_question, 
-  cannot_answer 
-} from './rag';
-import { generate_mcq } from './mcq';
-import { generate_qa } from './qa';
-import { about_chatbot } from './about_chatbot';
-import { 
-  agent, 
-  TOOLS, 
-  tool_router, 
-  find_relevant_docs, 
-  exercise_router, 
-  off_topic_response 
-} from './tools_manager';
+  constructor(
+    private configService: ConfigService,
+    private ragService: RagSService,
+    private mcqService: McqService,
+    private qaService: QaService,
+    private aboutChatbotService: AboutChatbotService,
+    private toolsManagerService: ToolsManagerService,
+  ) {
+    this.llm = new ChatOpenAI({
+      model: "gpt-4o-mini",
+      apiKey: this.configService.get<string>("OPENAI_API_KEY"),
+    });
+  }
 
-/**
- * Reformule la question de l'utilisateur et réinitialise l'état
- * @param state État actuel de l'agent
- * @returns État mis à jour
- */
-export function question_rewriter(state: AgentState): AgentState {
-  console.log(`Entering question_rewriter with following state: ${JSON.stringify(state)}`);
+  onModuleInit() {
+    this.graph = this.createGraph();
+  }
 
-  // Réinitialisation des variables d'état sauf 'question' et 'messages_'
-  state.documents = [];
-  state.related_subject = "";
-  state.related_subject_content = "";
-  state.language = "French";
-  state.topic = "Deeplearning";
-  state.path_txt = "../../data_txt";
-  state.subject = [];
-  state.tool_used = "";
-  state.rephrased_question = "";
-  state.proceed_to_generate = false;
-  state.rephrase_count = 0;
-  
-  // Lecture des sujets disponibles à partir du répertoire
-  try {
-    const files = fs.readdirSync(state.path_txt);
-    for (const filename of files) {
-      if (filename.toLowerCase().endsWith('.txt')) {
-        state.subject.push(path.parse(filename).name);
+  /**
+   * Rewrites the user question and resets the state
+   * @param state Current agent state
+   * @returns Updated state
+   */
+  async questionRewriter(
+    state: typeof AgentState.State,
+  ): Promise<Partial<typeof AgentState.State>> {
+    console.log(
+      `Entering questionRewriter with following state: ${JSON.stringify(state)}`,
+    );
+
+    // Reset state variables except 'question' and 'messages_'
+    state.documents = [];
+    state.related_subject = "";
+    state.related_subject_content = "";
+    state.language = "French";
+    state.topic = "Deeplearning";
+    state.path_txt =
+      this.configService.get<string>("PATH_TXT") || "../../data_txt";
+    state.subject = [];
+    state.tool_used = "";
+    state.rephrased_question = "";
+    state.proceed_to_generate = false;
+    state.rephrase_count = 0;
+
+    // Read available subjects from directory
+    try {
+      const files = fs.readdirSync(state.path_txt);
+      for (const filename of files) {
+        if (filename.toLowerCase().endsWith(".txt")) {
+          state.subject.push(path.parse(filename).name);
+        }
       }
+    } catch (error) {
+      console.error(`Error reading directory: ${error}`);
     }
-  } catch (error) {
-    console.error(`Error reading directory: ${error}`);
-  }
-  
-  // Initialisation des listes de messages si elles n'existent pas
-  if (!state.messages_ || !Array.isArray(state.messages_)) {
-    state.messages_ = [];
-  }
-  if (!state.messages || !Array.isArray(state.messages)) {
-    state.messages = [];
-  }
-  
-  // Ajout de la question actuelle aux messages s'ils n'existent pas déjà
-  if (!state.messages_.includes(state.question)) {
-    state.messages_.push(state.question);
-  }
-  if (!state.messages.includes(state.question)) {
-    state.messages.push(state.question);
-  }
 
-  // Si nous avons un historique de conversation, reformuler la question
-  if (state.messages_.length > 1) {
-    const conversation = state.messages_.slice(0, -1);
-    const current_question = state.question.content;
-    
-    const messages = [
-      new SystemMessage(
-        "You are a helpful assistant that rephrases the user's question to be a standalone question optimized for retrieval. And give just this rephrased question as answer."
-      )
-    ];
-    
-    messages.push(...conversation);
-    messages.push(new HumanMessage(current_question));
-    
-    const rephrase_prompt = ChatPromptTemplate.fromMessages(messages);
-    const llm = new ChatOpenAI({ modelName: "gpt-4o-mini" });
-    
-    // Ce code est asynchrone en TypeScript, mais comme la fonction Python est synchrone,
-    // nous simulons ici un comportement synchrone
-    // Dans un vrai code TypeScript, vous devriez utiliser async/await
-    llm.invoke(rephrase_prompt.format({}))
-      .then(response => {
-        const better_question = response.content.trim();
-        console.log(`question_rewriter: Rephrased question: ${better_question}`);
+    // Initialize message lists if they don't exist
+    if (!state.messages_ || !Array.isArray(state.messages_)) {
+      state.messages_ = [];
+    }
+    if (!state.messages || !Array.isArray(state.messages)) {
+      state.messages = [];
+    }
+
+    // Add the current question to messages if not already included
+    if (!state.messages_.some((msg) => msg === state.question)) {
+      state.messages_.push(state.question);
+    }
+    if (!state.messages.some((msg) => msg === state.question)) {
+      state.messages.push(state.question);
+    }
+
+    // If we have a conversation history, rephrase the question
+    try {
+      if (state.messages_.length > 1) {
+        const conversation = state.messages_.slice(0, -1);
+
+        const messages = [
+          new SystemMessage(
+            "You are a helpful assistant that rephrases the user's question to be a standalone question optimized for retrieval. And give just this rephrased question as answer.",
+          ),
+        ];
+
+        messages.push(...conversation);
+        messages.push(state.question);
+
+        const rephrase_prompt = ChatPromptTemplate.fromMessages(messages);
+
+        const promptMessages = await rephrase_prompt.formatMessages({});
+        const response = await this.llm.invoke(promptMessages);
+        const better_question = response.text.trim();
+
+        console.log(`questionRewriter: Rephrased question: ${better_question}`);
         state.rephrased_question = better_question;
-      })
-      .catch(error => {
-        console.error(`Error in question rephrasing: ${error}`);
-        state.rephrased_question = state.question.content;
-      });
-  } else {
-    state.rephrased_question = state.question.content;
-  }
-  
-  return state;
-}
-
-/**
- * Crée et configure le graphe de workflow pour le chatbot
- * @returns Le graphe compilé
- */
-export function createGraph() {
-  const checkpointer_rag = new MemorySaver();
-  const workflow_rag = new StateGraph(AgentState);
-  const tool_node = new ToolNode(TOOLS);
-
-  // Ajout des nœuds
-  workflow_rag.addNode("question_rewriter", question_rewriter);
-  workflow_rag.addNode("off_topic_response", off_topic_response);
-  workflow_rag.addNode("about_chatbot", about_chatbot);
-  workflow_rag.addNode("agent", agent);
-  workflow_rag.addNode("tools", tool_node);
-
-  workflow_rag.addNode("retrieve", retrieve);
-  workflow_rag.addNode("retrieval_grader", retrieval_grader);
-  workflow_rag.addNode("generate_answer", generate_answer);
-  workflow_rag.addNode("refine_question", refine_question);
-  workflow_rag.addNode("cannot_answer", cannot_answer);
-
-  workflow_rag.addNode("find_relevant_docs", find_relevant_docs);
-  workflow_rag.addNode("generate_mcq", generate_mcq);
-  workflow_rag.addNode("generate_qa", generate_qa);
-
-  // Ajout des arêtes
-  workflow_rag.addEdge(START, "question_rewriter");
-  workflow_rag.addEdge("question_rewriter", "agent");
-  workflow_rag.addEdge("agent", "tools");
-  workflow_rag.addConditionalEdges(
-    "tools",
-    tool_router,
-    {
-      "retrieve": "retrieve",
-      "find_relevant_docs": "find_relevant_docs",
-      "off_topic_response": "off_topic_response",
-      "about_chatbot": "about_chatbot",
-      "END": END
+      } else {
+        state.rephrased_question = state.question.text;
+      }
+    } catch (error) {
+      console.error(`Error in question rephrasing: ${error}`);
+      state.rephrased_question = state.question.text;
     }
-  );
 
-  workflow_rag.addEdge("retrieve", "retrieval_grader");
-  workflow_rag.addConditionalEdges(
-    "retrieval_grader",
-    proceed_router,
-    {
-      "generate_answer": "generate_answer",
-      "cannot_answer": "cannot_answer",
-      "refine_question": "refine_question",
-    },
-  );
-  workflow_rag.addEdge("refine_question", "retrieve");
-  workflow_rag.addEdge("generate_answer", END);
-  workflow_rag.addEdge("cannot_answer", END);
+    return state;
+  }
 
-  workflow_rag.addConditionalEdges(
-    "find_relevant_docs",
-    exercise_router,
-    {
-      "generate_mcq": "generate_mcq",
-      "generate_qa": "generate_qa",
-    },
-  );
-  workflow_rag.addEdge("generate_mcq", END);
-  workflow_rag.addEdge("generate_qa", END);
+  /**
+   * Creates and configures the workflow graph for the chatbot
+   * @returns The compiled graph
+   */
+  createGraph() {
+    const checkpointer_rag = new MemorySaver();
+    const tool_node = new ToolNode(this.toolsManagerService.getTools());
 
-  workflow_rag.addEdge("about_chatbot", END);
-  workflow_rag.addEdge("off_topic_response", END);
-  workflow_rag.setEntryPoint("question_rewriter");
-  
-  const graph = workflow_rag.compile({ checkpointer: checkpointer_rag });
+    const workflow_rag = new StateGraph(AgentState)
+      // Add nodes
+      .addNode("question_rewriter", this.questionRewriter.bind(this))
+      .addNode(
+        "off_topic_response",
+        this.toolsManagerService.offTopicResponse.bind(
+          this.toolsManagerService,
+        ),
+      )
+      .addNode(
+        "about_chatbot",
+        this.aboutChatbotService.aboutChatbot.bind(this.aboutChatbotService),
+      )
+      .addNode(
+        "agent",
+        this.toolsManagerService.agent.bind(this.toolsManagerService),
+      )
+      .addNode("tools", tool_node)
 
-  return graph;
-}
+      .addNode("retrieve", this.ragService.retrieve.bind(this.ragService))
+      .addNode(
+        "retrieval_grader",
+        this.ragService.retrievalGrader.bind(this.ragService),
+      )
+      .addNode(
+        "generate_answer",
+        this.ragService.generateAnswer.bind(this.ragService),
+      )
+      .addNode(
+        "refine_question",
+        this.ragService.refineQuestion.bind(this.ragService),
+      )
+      .addNode(
+        "cannot_answer",
+        this.ragService.cannotAnswer.bind(this.ragService),
+      )
 
-// Code pour exécuter le graphe si ce fichier est exécuté directement
-if (require.main === module) {
-  const graph = createGraph();
-  
-  // Exemple d'invocation du graphe avec une question
-  const memory_content_1_rag = "Qu'est-ce que le graph neural network GNN?";
-  const input_data = { 
-    question: new HumanMessage(memory_content_1_rag) 
-  };
-  
-  graph.invoke(input_data, { 
-    configurable: { thread_id: "5" } 
-  }).then(result => {
-    console.log("Result:", result);
-  }).catch(error => {
-    console.error("Error:", error);
-  });
+      .addNode(
+        "find_relevant_docs",
+        this.toolsManagerService.findRelevantDocs.bind(
+          this.toolsManagerService,
+        ),
+      )
+      .addNode(
+        "generate_mcq",
+        this.mcqService.generateMcq.bind(this.mcqService),
+      )
+      .addNode("generate_qa", this.qaService.generateQa.bind(this.qaService));
 
-  /*
-  // Autres exemples d'utilisation (commentés)
-  
-  // Q&A query
-  const qa_query = "Make me an question to develop about pooling in CNN?";
-  const qa_input = { question: new HumanMessage(qa_query) };
-  graph.invoke(qa_input, { configurable: { thread_id: "1" }});
+    // Add edges
+    workflow_rag.addEdge(START, "question_rewriter");
+    workflow_rag.addEdge("question_rewriter", "agent");
+    workflow_rag.addEdge("agent", "tools");
+    workflow_rag.addConditionalEdges(
+      "tools",
+      this.toolsManagerService.toolRouter.bind(this.toolsManagerService),
+      {
+        retrieve: "retrieve",
+        find_relevant_docs: "find_relevant_docs",
+        off_topic_response: "off_topic_response",
+        about_chatbot: "about_chatbot",
+        END: END,
+      },
+    );
 
-  // MCQ query
-  const mcq_query = "Make me an mcq about perceptron?";
-  const mcq_input = { question: new HumanMessage(mcq_query) };
-  graph.invoke(mcq_input, { configurable: { thread_id: "2" }});
+    workflow_rag.addEdge("retrieve", "retrieval_grader");
+    workflow_rag.addConditionalEdges(
+      "retrieval_grader",
+      this.ragService.proceedRouter.bind(this.ragService),
+      {
+        generate_answer: "generate_answer",
+        cannot_answer: "cannot_answer",
+        refine_question: "refine_question",
+      },
+    );
+    workflow_rag.addEdge("refine_question", "retrieve");
+    workflow_rag.addEdge("generate_answer", END);
+    workflow_rag.addEdge("cannot_answer", END);
 
-  // Off topic query
-  const off_topic_content_rag = "How is the weather?";
-  const off_topic_input = { question: new HumanMessage(off_topic_content_rag) };
-  graph.invoke(off_topic_input, { configurable: { thread_id: "3" }});
+    workflow_rag.addConditionalEdges(
+      "find_relevant_docs",
+      this.toolsManagerService.exerciseRouter.bind(this.toolsManagerService),
+      {
+        generate_mcq: "generate_mcq",
+        generate_qa: "generate_qa",
+      },
+    );
+    workflow_rag.addEdge("generate_mcq", END);
+    workflow_rag.addEdge("generate_qa", END);
 
-  // No relevant docs found
-  const no_docs_cotent_rag = "In the feald of GNN, What is deepGCN?";
-  const no_docs_input = { question: new HumanMessage(no_docs_cotent_rag) };
-  graph.invoke(no_docs_input, { configurable: { thread_id: "4" }});
+    workflow_rag.addEdge("about_chatbot", END);
+    workflow_rag.addEdge("off_topic_response", END);
 
-  // Memory follow-up
-  const memory_content_2_rag = "Can you give me a use case of it?";
-  const memory_input_2 = { question: new HumanMessage(memory_content_2_rag) };
-  graph.invoke(memory_input_2, { configurable: { thread_id: "5" }});
+    return workflow_rag.compile({ checkpointer: checkpointer_rag });
+  }
 
-  // About chatbot query
-  const about_chatbot_query = "Hi Adam, what do tou do?";
-  const about_input = { question: new HumanMessage(about_chatbot_query) };
-  graph.invoke(about_input, { configurable: { thread_id: "3" }});
-  */
+  /**
+   * Processes a user query through the chatbot graph
+   * @param question The user's question
+   * @param topic_id
+   * @returns The result of processing the question
+   */
+  async processQuery(question: string, topic_id: string) {
+    try {
+      const input_data = {
+        question: new HumanMessage(question),
+      };
+
+      return this.graph.invoke(input_data, {
+        configurable: { thread_id: topic_id },
+      });
+    } catch (error) {
+      console.error("Error processing query:", error);
+      throw error;
+    }
+  }
 }

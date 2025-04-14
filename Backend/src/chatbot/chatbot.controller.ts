@@ -3,11 +3,14 @@ import { ChatbotService } from "./chatbot.service";
 import { AuthGuard } from "@nestjs/passport";
 import { Response } from "express";
 import { MessageEntity } from "../entities/message.entity";
+import { GraphService } from './main-agent/graph';
 
 @UseGuards(AuthGuard("jwt-access"))
 @Controller("chatbot")
 export class ChatbotController {
-  constructor(private chatbotService: ChatbotService) {}
+  constructor(
+    private chatbotService: ChatbotService,
+  ) {}
 
   @Post()
   async chat(@Body() message: MessageEntity, @Res() res: Response) {
@@ -44,5 +47,10 @@ export class ChatbotController {
       );
       res.end();
     }
+  }
+
+  @Post('test')
+  async testChat(@Body() message: MessageEntity) {
+    return this.chatbotService.testChat(message);
   }
 }

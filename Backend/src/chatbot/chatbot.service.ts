@@ -10,6 +10,7 @@ import {
 import { MessageEntity } from "../entities/message.entity";
 import { ConfigService } from "@nestjs/config";
 import * as crypto from "node:crypto";
+import { GraphService } from './main-agent/graph';
 
 @Injectable()
 export class ChatbotService {
@@ -18,6 +19,7 @@ export class ChatbotService {
   constructor(
     private messageService: MessageService,
     private configService: ConfigService,
+    private graphService: GraphService,
   ) {
     // Initialisez le modèle de langage
     this.chatModel = new ChatOpenAI({
@@ -151,5 +153,23 @@ export class ChatbotService {
     });
 
     return stream.readable;
+  }
+
+  async testChat(message: MessageEntity) {
+    await this.messageService.createMessage(message);
+
+    const state = await this.graphService.processQuery(message.content, message.topic_id);
+
+    const createdMessage = new MessageEntity();
+    createdMessage.topic_id = message.topic_id;
+    createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
+    createdMessage.author = "assistant";
+    createdMessage.created_at = new Date();
+    createdMessage.status = "finished_successfully";
+    createdMessage.id = crypto.randomUUID();
+
+    await this.messageService.createMessage(createdMessage)
+
+    return createdMessage;
   }
 }

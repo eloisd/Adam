@@ -29,6 +29,19 @@ llm5 = ChatGroq(model="qwen-qwq-32b")
 llm6 = ChatCerebras(model="llama-3.3-70b")
 llm7 = ChatXAI(model="grok-3-mini-beta")
 
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
+from langchain_cerebras import ChatCerebras
+from langchain_xai import ChatXAI
+
+llm1 = ChatOpenAI(model="gpt-4o-mini")
+llm2 = ChatAnthropic(model="claude-3-5-haiku-latest")
+llm3 = ChatGoogleGenerativeAI(model="models/gemini-2.0-flash")
+llm4 = ChatGroq(model="meta-llama/llama-4-scout-17b-16e-instruct")
+llm5 = ChatGroq(model="qwen-qwq-32b")
+llm6 = ChatCerebras(model="llama-3.3-70b")
 
 class StorageAgentState(TypedDict):
     messages: List[BaseMessage]
@@ -174,6 +187,7 @@ def create_txt_content(state: StorageAgentState):
         # Add each page as an image
         for img_base64 in base64_images:
             content.append({
+                # Claude
                 "type": "image",
                 "source": {
                     "type": "base64",
@@ -181,11 +195,13 @@ def create_txt_content(state: StorageAgentState):
                     "data": img_base64
                 }
 
+                # # OpenAI
                 # "type": "image_url",
                 # "image_url": {
                 #     "url": f"data:application/pdf;base64,{base64_pdf}"
                 # }
 
+                # # Google Gemini
                 # "type": "image_url",
                 # "image_url": {
                 #     "url": f"data:image/jpeg;base64,{img_base64}"
@@ -198,9 +214,13 @@ def create_txt_content(state: StorageAgentState):
             model="claude-3-7-sonnet-20250219",
             max_tokens=9092,
         )
+
+        # # OpenAI
         # llm = ChatOpenAI(
         #     model="gpt-4o-mini",
         # )
+
+        # # Google Gemini
         # llm = ChatGoogleGenerativeAI(
         #     model="models/gemini-2.0-flash-exp",
         # )

@@ -1,7 +1,7 @@
 import {ChatbotGateway} from '../../ports/chatbot.gateway';
 import {Observable} from 'rxjs';
 import {inject} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../../environments/environment';
 import {Message} from '../../models/message.model';
 import {AuthStore} from '../../stores/auth.store';
@@ -86,6 +86,10 @@ export class ApiChatbotGateway extends ChatbotGateway {
 
       handleFetch();
     });
+  }
+
+  chatTest(message: Message): Observable<Message> {
+    return this.http.post<Message>(`${environment.apiUrl}/chatbot/test`, message);
   }
 
 }

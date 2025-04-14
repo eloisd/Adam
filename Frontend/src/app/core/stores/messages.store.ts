@@ -23,7 +23,7 @@ export const MessagesStore = signalStore(
   withEntities<Message>(),
   withRequestStatus(),
   withQueryPaginationEntity({
-    limit: 10,
+    limit: 20,
     offset: 0,
     orderBy: 'created_at',
     orderDirection: 'DESC',
@@ -82,7 +82,7 @@ export const MessagesStore = signalStore(
       pipe(
         tap(() => patchState(store, setPending(), setQueryParams({
           offset: 0,
-          limit: 10,
+          limit: 20,
           orderBy: 'created_at',
           orderDirection: 'DESC',
         }))),
@@ -128,6 +128,15 @@ export const MessagesStore = signalStore(
       patchState(store, addEntity(userMessage));
       chatbotGateway.chat(userMessage).subscribe({
         next: patch => store.applyPatch(patch)
+      })
+    },
+    sendMessageTest: (message: string) => {
+      const topic_id = store.selectedTopic()?.id;
+      if (!topic_id) return;
+      const userMessage = new Message(message, 'user', topic_id);
+      patchState(store, addEntity(userMessage));
+      chatbotGateway.chatTest(userMessage).subscribe({
+        next: message => patchState(store, addEntity(message)),
       })
     }
   })),

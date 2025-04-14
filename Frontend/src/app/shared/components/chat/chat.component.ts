@@ -107,7 +107,8 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 
   onSendMessage(text: string): void {
     this.isUserScrolling = false;
-    this.messagesStore.sendMessage(text);
+    // this.messagesStore.sendMessage(text);
+    this.messagesStore.sendMessageTest(text);
   }
 
   // Observe les changements de taille du conteneur wrapper

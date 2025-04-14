@@ -1,11 +1,6 @@
 import { Annotation } from "@langchain/langgraph";
-import { 
-  BaseMessage, 
-  HumanMessage, 
-  AIMessage, 
-  SystemMessage 
-} from "langchain/schema/messages";
 import { Document as DocumentInterface } from "langchain/document";
+import { BaseMessage, HumanMessage } from '@langchain/core/messages';
 
 /**
  * Définit l'état de l'agent du chatbot avec les annotations LangGraph
@@ -88,7 +83,7 @@ export const AgentState = Annotation.Root({
 });
 
 // Type pour représenter l'état de l'agent
-export type AgentStateType = typeof AgentState.T;
+export type AgentStateType = typeof AgentState.State;
 
 /**
  * Fonction utilitaire pour créer un état initial de l'agent
