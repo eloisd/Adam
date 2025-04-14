@@ -71,80 +71,83 @@ def question_rewriter(state: AgentState):
     else:
         state["rephrased_question"] = state["question"].content
     return state
-
-checkpointer_rag = MemorySaver()
-
-
-workflow_rag = StateGraph(AgentState)
-tool_node = ToolNode(TOOLS)
-
-workflow_rag.add_node("question_rewriter", question_rewriter)
-workflow_rag.add_node("off_topic_response", off_topic_response)
-workflow_rag.add_node("about_chatbot", about_chatbot)
-workflow_rag.add_node("agent", agent)
-workflow_rag.add_node("tools", tool_node)
-
-workflow_rag.add_node("retrieve", retrieve)
-workflow_rag.add_node("retrieval_grader", retrieval_grader)
-workflow_rag.add_node("generate_answer", generate_answer)
-workflow_rag.add_node("refine_question", refine_question)
-workflow_rag.add_node("cannot_answer", cannot_answer)
-
-workflow_rag.add_node("find_relevant_docs", find_relevant_docs)
-workflow_rag.add_node("generate_mcq", generate_mcq)
-workflow_rag.add_node("generate_qa", generate_qa)
+def graph():
+    checkpointer_rag = MemorySaver()
 
 
-workflow_rag.add_edge("question_rewriter", "agent")
-workflow_rag.add_edge("agent", "tools")
-workflow_rag.add_conditional_edges(
-    "tools", 
-    tool_router,
-    {
-        "retrieve": "retrieve", 
-        "find_relevant_docs": "find_relevant_docs",
-        "off_topic_response": "off_topic_response",
-        "about_chatbot": "about_chatbot",
-        "END": END
-    }
-)
+    workflow_rag = StateGraph(AgentState)
+    tool_node = ToolNode(TOOLS)
 
-workflow_rag.add_edge("retrieve", "retrieval_grader")
-workflow_rag.add_conditional_edges(
-    "retrieval_grader",
-    proceed_router,
-    {
-        "generate_answer": "generate_answer",
-        "cannot_answer": "cannot_answer",
-        "refine_question": "refine_question",
-    },
-)
-workflow_rag.add_edge("refine_question", "retrieve")
-workflow_rag.add_edge("generate_answer", END)
-workflow_rag.add_edge("cannot_answer", END)
+    workflow_rag.add_node("question_rewriter", question_rewriter)
+    workflow_rag.add_node("off_topic_response", off_topic_response)
+    workflow_rag.add_node("about_chatbot", about_chatbot)
+    workflow_rag.add_node("agent", agent)
+    workflow_rag.add_node("tools", tool_node)
 
-workflow_rag.add_conditional_edges(
-    "find_relevant_docs",
-    exercise_router,
-    {
-        "generate_mcq": "generate_mcq",
-        "generate_qa": "generate_qa",
-    },
-)
-workflow_rag.add_edge("generate_mcq",END)
-workflow_rag.add_edge("generate_qa",END)
+    workflow_rag.add_node("retrieve", retrieve)
+    workflow_rag.add_node("retrieval_grader", retrieval_grader)
+    workflow_rag.add_node("generate_answer", generate_answer)
+    workflow_rag.add_node("refine_question", refine_question)
+    workflow_rag.add_node("cannot_answer", cannot_answer)
 
-workflow_rag.add_edge("about_chatbot",END)
-workflow_rag.add_edge("off_topic_response", END)
-workflow_rag.set_entry_point("question_rewriter")
-graph = workflow_rag.compile(checkpointer=checkpointer_rag)
+    workflow_rag.add_node("find_relevant_docs", find_relevant_docs)
+    workflow_rag.add_node("generate_mcq", generate_mcq)
+    workflow_rag.add_node("generate_qa", generate_qa)
 
+
+    workflow_rag.add_edge("question_rewriter", "agent")
+    workflow_rag.add_edge("agent", "tools")
+    workflow_rag.add_conditional_edges(
+        "tools", 
+        tool_router,
+        {
+            "retrieve": "retrieve", 
+            "find_relevant_docs": "find_relevant_docs",
+            "off_topic_response": "off_topic_response",
+            "about_chatbot": "about_chatbot",
+            "END": END
+        }
+    )
+
+    workflow_rag.add_edge("retrieve", "retrieval_grader")
+    workflow_rag.add_conditional_edges(
+        "retrieval_grader",
+        proceed_router,
+        {
+            "generate_answer": "generate_answer",
+            "cannot_answer": "cannot_answer",
+            "refine_question": "refine_question",
+        },
+    )
+    workflow_rag.add_edge("refine_question", "retrieve")
+    workflow_rag.add_edge("generate_answer", END)
+    workflow_rag.add_edge("cannot_answer", END)
+
+    workflow_rag.add_conditional_edges(
+        "find_relevant_docs",
+        exercise_router,
+        {
+            "generate_mcq": "generate_mcq",
+            "generate_qa": "generate_qa",
+        },
+    )
+    workflow_rag.add_edge("generate_mcq",END)
+    workflow_rag.add_edge("generate_qa",END)
+
+    workflow_rag.add_edge("about_chatbot",END)
+    workflow_rag.add_edge("off_topic_response", END)
+    workflow_rag.set_entry_point("question_rewriter")
+    graph = workflow_rag.compile(checkpointer=checkpointer_rag)
+
+    return graph
 
 if __name__ == "__main__":
 
     from IPython.display import Image, display
     from langchain_core.runnables.graph import MermaidDrawMethod
 
+    graph = graph()
+    
     display(
         Image(
             graph.get_graph().draw_mermaid_png(
