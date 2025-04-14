@@ -36,6 +36,9 @@ export class FileEntity {
   @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
+  @Column({ type: 'longtext' })
+  text: string;
+
   @Column()
   topic_id: string
 

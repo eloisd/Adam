@@ -1,11 +1,11 @@
 import {patchState, signalStore, withHooks, withMethods, withProps} from '@ngrx/signals';
 import {FileModel} from '../models/file.model';
 import {
-  addEntities,
+  addEntities, EntityMap,
   removeAllEntities,
   removeEntity,
   setAllEntities,
-  setEntities,
+  setEntities, updateEntity,
   withEntities
 } from '@ngrx/signals/entities';
 import {setError, setPending, setSuccess, withRequestStatus} from '../features/request-status.feature';
@@ -16,6 +16,7 @@ import {rxMethod} from '@ngrx/signals/rxjs-interop';
 import {catchError, pipe, switchMap, tap} from 'rxjs';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {TopicsStore} from './topics.store';
+import {RagGateway} from '../ports/rag.gateway';
 
 export const FilesStore = signalStore(
   { providedIn: 'root' },
@@ -25,7 +26,11 @@ export const FilesStore = signalStore(
   withProps((store, topicsStore = inject(TopicsStore)) => ({
     selectedTopic: topicsStore.selectedEntity,
   })),
-  withMethods((store, filesGateway = inject(FilesGateway)) => ({
+  withMethods((
+    store,
+    filesGateway = inject(FilesGateway),
+    ragGateway = inject(RagGateway)
+  ) => ({
     downloadFile: rxMethod<FileModel>(
       pipe(
         tap(() => patchState(store, setPending())),
@@ -49,6 +54,13 @@ export const FilesStore = signalStore(
     ),
     deleteFile: (id: string) => filesGateway.deleteFile(id).pipe(
       tap(() => patchState(store, removeEntity(id))),
+    ),
+    processRag: (id: string) => ragGateway.processFileForRAG(id).pipe(
+      tap(() => {
+        const file = store.entityMap()[id];
+        file.is_ragged = true;
+        updateEntity({ id: id, changes: file})
+      }),
     ),
   })),
   withHooks((store) => ({

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity } from '../../entities/file.entity';
-import { Repository } from 'typeorm';
+import { FindOptionsRelations, Repository } from 'typeorm';
 import * as fs from 'fs-extra';
 import * as path from 'node:path';
 
@@ -47,8 +47,12 @@ export class FilesService implements OnModuleInit {
     return this.fileRepository.find({ where: { topic_id } });
   }
 
-  async getFileById(id: string) {
-    const file = await this.fileRepository.findOne({ where: { id } });
+  async getFileById(id: string, relations?: FindOptionsRelations<FileEntity>) {
+    const file = await this.fileRepository.findOne({
+      select: {  },
+      where: { id },
+      relations: relations,
+    });
     if (!file) {
       throw new NotFoundException('Fichier non trouvé');
     }
@@ -64,5 +68,9 @@ export class FilesService implements OnModuleInit {
     await fs.remove(file.path);
 
     return this.fileRepository.delete(id);
+  }
+
+  updateFile(id: string, file: Partial<FileEntity>) {
+    return this.fileRepository.update(id, file);
   }
 }

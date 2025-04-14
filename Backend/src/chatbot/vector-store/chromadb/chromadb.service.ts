@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { OpenAIEmbeddings } from '@langchain/openai';
+import { Document } from "langchain/document";
 
 @Injectable()
 export class ChromaDbService implements OnModuleInit {
@@ -39,13 +40,8 @@ export class ChromaDbService implements OnModuleInit {
   /**
    * Ajouter de nouveaux documents vectorisés à la base.
    */
-  async addDocuments(docs: string[], metadatas?: Record<string, any>[]) {
-    return this.vectorStore.addDocuments(
-      docs.map((text, index) => ({
-        pageContent: text,
-        metadata: metadatas?.[index] || {},
-      })),
-    );
+  addDocuments(docs: Document[]) {
+    return this.vectorStore.addDocuments(docs);
   }
 
   getRetriever(k = 5) {

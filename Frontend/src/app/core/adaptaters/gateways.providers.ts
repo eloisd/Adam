@@ -13,6 +13,8 @@ import {QuestionGateway} from '../ports/question.gateway';
 import {ApiQuestionGateway} from './api/api-question.gateway';
 import {ChatbotGateway} from '../ports/chatbot.gateway';
 import {ApiChatbotGateway} from './api/api-chatbot.gateway';
+import {RagGateway} from '../ports/rag.gateway';
+import {ApiRagGateway} from './api/api-rag.gateway';
 
 export function provideGateways(): Provider[] {
   return [
@@ -23,5 +25,6 @@ export function provideGateways(): Provider[] {
     { provide: FilesGateway, useFactory: () => new ApiFilesGateway() },
     { provide: QuestionGateway, useFactory: () => new ApiQuestionGateway() },
     { provide: ChatbotGateway, useFactory: () => new ApiChatbotGateway() },
+    { provide: RagGateway, useFactory: () => new ApiRagGateway() },
   ]
 }

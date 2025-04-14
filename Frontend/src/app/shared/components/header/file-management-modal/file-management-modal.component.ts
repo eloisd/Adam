@@ -95,12 +95,13 @@ export class FileManagementModalComponent {
 
   startRag(): void {
     this.isLoading = true;
-    // Simuler un appel API pour le RAG
-    setTimeout(() => {
-      this.isLoading = false;
-      this.file()!!.is_ragged = true;
-      this.dialogRef.close();
-    }, 2000);
+    this.filesStore.processRag(this.file()!!.id).subscribe({
+      next: () => this.isLoading = false,
+      error: (err) => {
+        console.error('Error processing file for RAG:', err);
+        this.isLoading = false;
+      }
+    })
   }
 
   closeDialog(): void {

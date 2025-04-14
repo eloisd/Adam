@@ -5,7 +5,7 @@ import { RagService } from './rag.service';
 export class RagController {
   constructor(private ragService: RagService) {}
 
-  @Post(':id')
+  @Post('process/:id')
   async processFileForRAG(@Param('id') id: string) {
     try {
       await this.ragService.processFileForRAG(id);

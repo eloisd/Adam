@@ -50,6 +50,8 @@ export class HomeComponent implements OnInit {
       const topicId = params.get('topicid');
       this.topicsStore.selectEntity(topicId);
     })
+
+    this.topicsStore.entityMap
   }
 
   onScrollAppChat(event: Event) {
