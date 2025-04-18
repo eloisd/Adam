@@ -36,7 +36,7 @@ export class FileEntity {
   @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
-  @Column({ type: 'longtext' })
+  @Column({ type: 'longtext', nullable: true })
   text: string;
 
   @Column()

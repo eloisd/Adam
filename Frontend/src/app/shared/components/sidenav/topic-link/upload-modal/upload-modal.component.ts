@@ -178,28 +178,41 @@ export class UploadModalComponent implements OnInit {
     this.files.splice(index, 1);
   }
 
+
   uploadFiles(): void {
+    // Vérifier d'abord que le topic sélectionné existe
+    const selectedTopic = this.filesStore.selectedTopic();
+    if (!selectedTopic) {
+      this.snackBar.open('Veuillez sélectionner un topic avant de télécharger des fichiers', 'Fermer', { 
+        duration: 5000, 
+        panelClass: 'error-snackbar' 
+      });
+      return;
+    }
+  
     // Vérifier que tous les formulaires sont valides
     const allFormsValid = this.files.every(fileItem => fileItem.formGroup.valid);
-
     if (allFormsValid) {
       const files = this.files.map(fileItem => fileItem.file);
-      const filesModel = this.files.map(fileItem =>
+      const filesModel = this.files.map(fileItem => 
         new FileModel(
           fileItem.file,
           fileItem.formGroup.value.document_type,
           fileItem.formGroup.value.title,
-          this.filesStore.selectedTopic()!!.id
+          selectedTopic.id // Utiliser la référence sécurisée
         )
       );
-
-      this.filesStore.uploadFiles(this.filesStore.selectedTopic()!!.id, files, filesModel).subscribe({
+      
+      this.filesStore.uploadFiles(selectedTopic.id, files, filesModel).subscribe({
         next: () => {
           this.snackBar.open('Fichiers téléchargés avec succès', 'Fermer', { duration: 3000 });
           this.dialogRef.close();
         },
         error: () => {
-          this.snackBar.open('Erreur lors du téléchargement des fichiers', 'Fermer', { duration: 5000, panelClass: 'error-snackbar' });
+          this.snackBar.open('Erreur lors du téléchargement des fichiers', 'Fermer', { 
+            duration: 5000, 
+            panelClass: 'error-snackbar' 
+          });
         }
       });
     } else {

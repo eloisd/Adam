@@ -162,7 +162,14 @@ export class ChatbotService {
 
     const createdMessage = new MessageEntity();
     createdMessage.topic_id = message.topic_id;
-    createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
+    if (state['messages_'][state['messages_'].length - 2] instanceof AIMessage) {
+      console.log("2 AIMessage")
+      createdMessage.content = state['messages_'][state['messages_'].length - 2].content + "\n\n" + state['messages_'][state['messages_'].length - 1].content;
+    } else {
+      console.log("1 AIMessage")
+      createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
+    }
+    // createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
     createdMessage.author = "assistant";
     createdMessage.created_at = new Date();
     createdMessage.status = "finished_successfully";
