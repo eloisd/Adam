@@ -1,4 +1,8 @@
 @for (question of orderedEntities(); track question.id) {
-  <app-question [question]="question">
-  </app-question>
+  @if (question.isQCM) {
+    <app-mcq-question [question]="question"></app-mcq-question>
+  }
+  @else {
+    <app-qa-question [question]="question"></app-qa-question>
+  }
 }

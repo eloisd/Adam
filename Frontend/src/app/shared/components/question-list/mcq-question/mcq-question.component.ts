@@ -3,15 +3,15 @@ import {NgForOf, NgIf} from '@angular/common';
 import {Question} from '../../../../core/models/question.model';
 
 @Component({
-  selector: 'app-question',
+  selector: 'app-mcq-question',
   imports: [
     NgIf,
     NgForOf
   ],
-  templateUrl: './question.component.html',
-  styleUrl: './question.component.scss'
+  templateUrl: './mcq-question.component.html',
+  styleUrl: './mcq-question.component.scss'
 })
-export class QuestionComponent {
+export class McqQuestionComponent {
   @Input() question!: Question;
   @Input() showSubmitButton: boolean = true;
 

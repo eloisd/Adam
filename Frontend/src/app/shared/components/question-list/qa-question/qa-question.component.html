@@ -1,0 +1,45 @@
+<div class="qa-question-container">
+  <div class="question">
+    <h3>{{ question.content }}</h3>
+  </div>
+
+  <div class="answer-area">
+    <textarea
+      [disabled]="isSubmitted"
+      [(ngModel)]="userAnswer"
+      (input)="onInput($event)"
+      placeholder="Tapez votre réponse ici..."
+      rows="4">
+    </textarea>
+  </div>
+
+  <!-- Section affichant la réponse correcte après soumission -->
+  <div class="correct-answer" *ngIf="showCorrectAnswer">
+    <div class="answer-status" [class.is-correct]="checkAnswer()" [class.is-incorrect]="!checkAnswer()">
+      <span class="status-icon">{{ checkAnswer() ? '✓' : '✗' }}</span>
+      <span class="status-text">{{ checkAnswer() ? 'Bonne réponse!' : 'Ce n\'est pas tout à fait ça.' }}</span>
+    </div>
+    <div class="answer-reveal">
+      <h4>Réponse correcte:</h4>
+      <p>{{ question.answers[0].content }}</p>
+<!--      <p class="explanation" *ngIf="question.explanation">{{ question.explanation }}</p>-->
+    </div>
+  </div>
+
+  <div class="actions">
+    <button
+      *ngIf="showSubmitButton && !isSubmitted"
+      [disabled]="userAnswer.trim() === ''"
+      (click)="onSubmit()"
+      class="submit-button">
+      Valider
+    </button>
+
+    <button
+      *ngIf="isSubmitted"
+      (click)="resetAnswer()"
+      class="reset-button">
+      Essayer à nouveau
+    </button>
+  </div>
+</div>
