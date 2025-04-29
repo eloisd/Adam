@@ -54,8 +54,10 @@
     font-weight: bold;
 
     &.is-correct {
-      background-color: rgba(76, 175, 80, 0.1);
-      color: #2e7d32;
+      //background-color: rgba(76, 175, 80, 0.1);
+      //color: #2e7d32;
+      background-color: rgba(0, 123, 255, 0.1);
+      color: #007bff;
     }
 
     &.is-incorrect {

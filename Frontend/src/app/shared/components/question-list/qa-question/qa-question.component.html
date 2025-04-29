@@ -17,7 +17,7 @@
   <div class="correct-answer" *ngIf="showCorrectAnswer">
     <div class="answer-status" [class.is-correct]="checkAnswer()" [class.is-incorrect]="!checkAnswer()">
       <span class="status-icon">{{ checkAnswer() ? '✓' : '✗' }}</span>
-      <span class="status-text">{{ checkAnswer() ? 'Bonne réponse!' : 'Ce n\'est pas tout à fait ça.' }}</span>
+      <span class="status-text">{{ checkAnswer() ? 'Merci pour votre réponse ! Voici ce que nous avons trouvé de notre côté' : 'Ce n\'est pas tout à fait ça.' }}</span>
     </div>
     <div class="answer-reveal">
       <h4>Réponse correcte:</h4>
