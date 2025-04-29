@@ -6,7 +6,7 @@ export class AnswerEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 255 })
+  @Column({ type: 'text' })
   content: string;
 
   @Column({ type: 'boolean' })

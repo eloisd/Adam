@@ -11,6 +11,9 @@ import { MessageEntity } from "../entities/message.entity";
 import { ConfigService } from "@nestjs/config";
 import * as crypto from "node:crypto";
 import { GraphService } from './main-agent/graph';
+import { QuestionEntity } from "../entities/question.entity";
+import { AnswerEntity } from "../entities/answer.entity";
+import { QuestionService } from "../api/question/question.service";
 
 @Injectable()
 export class ChatbotService {
@@ -18,6 +21,7 @@ export class ChatbotService {
 
   constructor(
     private messageService: MessageService,
+    private questionService: QuestionService,
     private configService: ConfigService,
     private graphService: GraphService,
   ) {
@@ -161,15 +165,44 @@ export class ChatbotService {
     const state = await this.graphService.processQuery(message.content, message.topic_id);
 
     const createdMessage = new MessageEntity();
+    let createdQuestionList = [new QuestionEntity(), new QuestionEntity(), new QuestionEntity()]
+
     createdMessage.topic_id = message.topic_id;
     if (state['messages_'][state['messages_'].length - 2] instanceof AIMessage) {
-      console.log("2 AIMessage")
-      createdMessage.content = state['messages_'][state['messages_'].length - 2].content + "\n\n" + state['messages_'][state['messages_'].length - 1].content;
+      const parseJson = JSON.parse(state['messages_'][state['messages_'].length - 2].content);
+      console.log(parseJson);
+      const isQCM = !!parseJson["1"]['mcq'];
+      for (let i = 1; i <= 3; i++) {
+        createdQuestionList[i - 1].id = crypto.randomUUID();
+        createdQuestionList[i - 1].topic_id = message.topic_id;
+        createdQuestionList[i - 1].isQCM = isQCM;
+        createdQuestionList[i - 1].content = parseJson[`${i}`]['mcq'] || parseJson[`${i}`]['question'];
+        createdQuestionList[i - 1].answers = [];
+        const correctAnswer = parseJson[`${i}`]['correct'];
+        if (isQCM) {
+          for (const value of ["a", "b", "c", "d"]) {
+            const answer = new AnswerEntity();
+            answer.id = crypto.randomUUID();
+            answer.question_id = createdQuestionList[i - 1].id;
+            answer.content = parseJson[`${i}`]['options'][value];
+            answer.is_correct = value === correctAnswer;
+            createdQuestionList[i - 1].answers.push(answer);
+          }
+        } else {
+          const answer = new AnswerEntity();
+          answer.id = crypto.randomUUID();
+          answer.question_id = createdQuestionList[i - 1].id;
+          answer.content = parseJson[`${i}`]['correct'];
+          answer.is_correct = true;
+          createdQuestionList[i - 1].answers.push(answer);
+        }
+
+        this.questionService.createQuestion(createdQuestionList[i - 1]);
+      }
     } else {
-      console.log("1 AIMessage")
-      createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
+      createdQuestionList = [];
     }
-    // createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
+    createdMessage.content = state['messages_'][state['messages_'].length - 1].content;
     createdMessage.author = "assistant";
     createdMessage.created_at = new Date();
     createdMessage.status = "finished_successfully";
@@ -177,6 +210,6 @@ export class ChatbotService {
 
     await this.messageService.createMessage(createdMessage)
 
-    return createdMessage;
+    return { message: createdMessage, questions: createdQuestionList };
   }
 }

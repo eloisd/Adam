@@ -54,7 +54,8 @@ import { CommonModule } from '../common/common.module';
     FilesService,
     MessageService,
     TopicService,
-    UserService
+    UserService,
+    QuestionService,
   ],
 })
 export class ApiModule {}

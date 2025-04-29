@@ -5,7 +5,7 @@ import { BaseMessage, HumanMessage } from '@langchain/core/messages';
 /**
  * Définit l'état de l'agent du chatbot avec les annotations LangGraph
  */
-export const AgentState = Annotation.Root({
+export const  AgentState = Annotation.Root({
   // Liste des messages dans l'historique complet de la conversation
   messages_: Annotation<BaseMessage[]>({
     reducer: (x, y) => y ?? x ?? [],

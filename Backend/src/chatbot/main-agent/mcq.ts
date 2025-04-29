@@ -16,7 +16,7 @@ export class McqService {
 
   constructor(private configService: ConfigService) {
     this.llm = new ChatOpenAI({
-      modelName: "gpt-4o-mini",
+      model: "gpt-4o-mini",
       apiKey: this.configService.get<string>('OPENAI_API_KEY'),
     });
   }
