@@ -1,5 +1,6 @@
 import {patchState, signalStore, withComputed, withHooks, withMethods, withProps} from '@ngrx/signals';
 import {
+  addEntities,
   addEntity,
   removeAllEntities,
   removeEntity,
@@ -77,7 +78,10 @@ export const QuestionsStore = signalStore(
           catchError(async error => patchState(store, setError(error)))
         )),
       )
-    )
+    ),
+    addQuestions(questions: Question[]) {
+      patchState(store, addEntities(questions));
+    }
   })),
   withHooks((store) => ({
     onInit() {

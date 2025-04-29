@@ -17,6 +17,8 @@ import {setQueryParams, setQueryTotal, withQueryPaginationEntity} from '../featu
 import {toObservable} from '@angular/core/rxjs-interop';
 import {TopicsStore} from './topics.store';
 import {ChatbotGateway} from '../ports/chatbot.gateway';
+import {Question} from '../models/question.model';
+import {QuestionsStore} from './questions.store';
 
 export const MessagesStore = signalStore(
   { providedIn: 'root' },
@@ -77,6 +79,7 @@ export const MessagesStore = signalStore(
     store,
     messagesGateway = inject(MessagesGateway),
     chatbotGateway = inject(ChatbotGateway),
+    questionsStore = inject(QuestionsStore)
   ) => ({
     fetchMessages: rxMethod<string>(
       pipe(
@@ -136,7 +139,10 @@ export const MessagesStore = signalStore(
       const userMessage = new Message(message, 'user', topic_id);
       patchState(store, addEntity(userMessage));
       chatbotGateway.chatTest(userMessage).subscribe({
-        next: message => patchState(store, addEntity(message)),
+        next: ({ message, questions }) => {
+          patchState(store, addEntity(message))
+          if (questions.length > 0) questionsStore.addQuestions(questions);
+        },
       })
     }
   })),

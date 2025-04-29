@@ -1,5 +1,5 @@
-import {Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {KatexOptions, MarkdownComponent} from 'ngx-markdown';
+import {Component, ElementRef, Input} from '@angular/core';
+import {MarkdownComponent} from 'ngx-markdown';
 import {HighlightService} from './highlight.service';
 
 @Component({

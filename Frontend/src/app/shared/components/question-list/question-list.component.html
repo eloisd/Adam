@@ -1,7 +1,4 @@
 @for (question of orderedEntities(); track question.id) {
-  <app-question
-    [question]="question"
-    (answerSelected)="onAnswerSelected($event)"
-    (submit)="onSubmit($event)">
+  <app-question [question]="question">
   </app-question>
 }

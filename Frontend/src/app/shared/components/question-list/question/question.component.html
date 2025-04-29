@@ -7,23 +7,31 @@
     <div
       *ngFor="let answer of question.answers"
       class="answer-item"
-      [class.selected]="selectedAnswerId === answer.id"
+      [class]="getAnswerClass(answer.id)"
       (click)="selectAnswer(answer.id)">
       <input
         type="radio"
-        [id]="'answer-' + answer.id"
-        name="answer"
+        [id]="answer.id"
+        [name]="question.id"
         [value]="answer.id"
         [checked]="selectedAnswerId === answer.id">
-      <label [for]="'answer-' + answer.id">{{ answer.content }}</label>
+      <label [for]="answer.id">{{ answer.content }}</label>
+
+      <!-- Icône pour les réponses après soumission -->
+      <span *ngIf="isSubmitted" class="answer-icon">
+        <span *ngIf="isAnswerCorrect(answer.id)" class="correct-icon">✓</span>
+        <span *ngIf="!isAnswerCorrect(answer.id) && selectedAnswerId === answer.id" class="incorrect-icon">✗</span>
+      </span>
     </div>
   </div>
 
   <div class="actions" *ngIf="showSubmitButton">
     <button
-      [disabled]="!selectedAnswerId"
-      (click)="onSubmit()">
-      Valider
+      [disabled]="!selectedAnswerId || isSubmitted"
+      (click)="onSubmit()"
+      [class.button-correct]="isSubmitted && isCorrect"
+      [class.button-incorrect]="isSubmitted && !isCorrect">
+      {{ isSubmitted ? (isCorrect ? 'Correct ✓' : 'Incorrect ✗') : 'Valider' }}
     </button>
   </div>
 </div>

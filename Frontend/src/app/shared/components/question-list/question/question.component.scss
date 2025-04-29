@@ -26,9 +26,10 @@
   align-items: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 }
 
-.answer-item:hover {
+.answer-item:hover:not(.correct):not(.incorrect) {
   background-color: #f0f0f0;
 }
 
@@ -37,8 +38,45 @@
   border-color: #007bff;
 }
 
+.answer-item.correct {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: #4CAF50;
+}
+
+.answer-item.incorrect {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: #F44336;
+}
+
+.answer-item.selected.correct {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-color: #4CAF50;
+  border-width: 2px;
+}
+
+.answer-item.selected.incorrect {
+  background-color: rgba(244, 67, 54, 0.2);
+  border-color: #F44336;
+  border-width: 2px;
+}
+
 input[type="radio"] {
   margin-right: 10px;
+}
+
+.answer-icon {
+  position: absolute;
+  right: 15px;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.correct-icon {
+  color: #4CAF50;
+}
+
+.incorrect-icon {
+  color: #F44336;
 }
 
 button {
@@ -49,6 +87,7 @@ button {
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: all 0.3s ease;
 }
 
 button:disabled {
@@ -58,4 +97,12 @@ button:disabled {
 
 button:hover:not(:disabled) {
   background-color: #0069d9;
+}
+
+button.button-correct {
+  background-color: #4CAF50;
+}
+
+button.button-incorrect {
+  background-color: #F44336;
 }

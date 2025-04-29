@@ -1,13 +1,13 @@
 export class Answer {
   id: string
   content: string
-  isCorrect: boolean
+  is_correct: boolean
   created_at: string
 
-  constructor(content: string, isCorrect: boolean) {
+  constructor(content: string, is_correct: boolean) {
     this.id = crypto.randomUUID()
     this.content = content
-    this.isCorrect = isCorrect
+    this.is_correct = is_correct
     this.created_at = new Date().toISOString()
   }
 }

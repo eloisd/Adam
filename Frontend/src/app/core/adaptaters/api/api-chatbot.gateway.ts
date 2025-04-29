@@ -5,6 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../../environments/environment';
 import {Message} from '../../models/message.model';
 import {AuthStore} from '../../stores/auth.store';
+import {Question} from '../../models/question.model';
 
 export class ApiChatbotGateway extends ChatbotGateway {
   readonly http = inject(HttpClient);
@@ -70,7 +71,7 @@ export class ApiChatbotGateway extends ChatbotGateway {
         sendRequest().then(async response => {
           if (response.status === 401) {
             try {
-              await refreshToken()
+              await refreshToken();
               const retryResponse = await sendRequest(); // Refaire la requête avec le nouveau token
               await processResponse(retryResponse);
             } catch (refreshError) {
@@ -88,8 +89,8 @@ export class ApiChatbotGateway extends ChatbotGateway {
     });
   }
 
-  chatTest(message: Message): Observable<Message> {
-    return this.http.post<Message>(`${environment.apiUrl}/chatbot/test`, message);
+  chatTest(message: Message): Observable<{ message: Message, questions: Question[] }> {
+    return this.http.post<{ message: Message, questions: Question[] }>(`${environment.apiUrl}/chatbot/test`, message);
   }
 
 }

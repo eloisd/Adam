@@ -15,17 +15,4 @@ import {Question} from '../../../core/models/question.model';
 export class QuestionListComponent {
   readonly questionsStore = inject(QuestionsStore);
   readonly orderedEntities: Signal<Question[]> = this.questionsStore.orderedEntities;
-
-  onAnswerSelected(answerId: string): void {
-    console.log('Réponse sélectionnée:', answerId);
-  }
-
-  onSubmit(answerId: string): void {
-    const selectedAnswer = this.orderedEntities()[0].answers.find(a => a.id === answerId);
-    if (selectedAnswer?.isCorrect) {
-      console.log('Bonne réponse!');
-    } else {
-      console.log('Mauvaise réponse!');
-    }
-  }
 }
