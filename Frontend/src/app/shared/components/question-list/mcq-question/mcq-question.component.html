@@ -15,7 +15,7 @@
         [name]="question.id"
         [value]="answer.id"
         [checked]="selectedAnswerId === answer.id">
-      <label [for]="answer.id">{{ answer.content }}</label>
+      <label [for]="answer.id" style="padding-right: 24px">{{ answer.content }}</label>
 
       <!-- Icône pour les réponses après soumission -->
       <span *ngIf="isSubmitted" class="answer-icon">
